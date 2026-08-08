@@ -11,7 +11,7 @@
 
 | | |
 |---|---|
-| Значок в трее | Своё меню в стиле Windows 11 вместо системного контекстного, обратный отсчёт прямо на значке |
+| Значок в трее | Логотип, синева которого выцветает по мере приближения перерыва и возвращается после него; своё меню в стиле Windows 11 вместо системного контекстного |
 | Три способа напоминания | Только значок · системное уведомление · полноэкранная заставка с кольцом отсчёта |
 | Расписание | Интервал 5–120 минут, длительность перерыва 5–300 секунд |
 | Рабочие часы | Диапазон времени (в том числе через полночь) и дни недели |
@@ -19,19 +19,31 @@
 | Звук | Мягкий перезвон в начале и в конце перерыва, синтезируется на лету |
 | Прочее | Автозапуск при входе в Windows, затемнение всех мониторов, счётчик перерывов |
 
-## Сборка и запуск
+## Установка
+
+```bash
+powershell -ExecutionPolicy Bypass -File Installer\install.ps1
+```
+
+Скрипт собирает проект, кладёт единственный `TwentyMate.exe` (~250 КБ) в
+`%LOCALAPPDATA%\Programs\TwentyMate`, создаёт ярлык в меню «Пуск», включает
+автозапуск и сразу запускает приложение. Права администратора не нужны.
+
+Флаги: `-SelfContained` — вшить .NET в exe (~150 МБ), если рантайма может не
+оказаться; `-NoAutostart` — без запуска при входе; `-NoLaunch` — не запускать
+после установки.
+
+Удаление — `Installer\uninstall.ps1` (ключ `-KeepSettings` оставит настройки
+и статистику).
+
+## Сборка для разработки
 
 ```bash
 dotnet build -c Release
 ```
 
 Готовый `TwentyMate.exe` появится в `bin/Release/net8.0-windows/`.
-
-Самодостаточный файл, которому не нужен установленный .NET:
-
-```bash
-dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
-```
+Нужен .NET 8 SDK; для запуска обычной сборки — .NET 8 Desktop Runtime.
 
 ## Как устроено
 
@@ -39,7 +51,7 @@ dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
 |---|---|
 | [Core/BreakScheduler.cs](Core/BreakScheduler.cs) | Состояния работы, перерыва, паузы и нерабочих часов |
 | [Core/TrayController.cs](Core/TrayController.cs) | Связывает планировщик, значок и окна — решает, что показать |
-| [Core/TrayIconFactory.cs](Core/TrayIconFactory.cs) | Рисует значок трея на GDI+ и кэширует его между тиками |
+| [Core/TrayIconFactory.cs](Core/TrayIconFactory.cs) | Рисует логотип в трее на GDI+, ведёт цвет по прогрессу и кэширует результат |
 | [Core/ThemeManager.cs](Core/ThemeManager.cs) | Палитра и акцентный цвет, синхронизация с системой |
 | [Core/WindowEffects.cs](Core/WindowEffects.cs) | Mica, скруглённые углы и тёмная рамка через DWM |
 | [Views/BreakWindow.xaml](Views/BreakWindow.xaml) | Полноэкранная заставка перерыва |
