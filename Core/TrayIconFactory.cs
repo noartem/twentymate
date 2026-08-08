@@ -7,15 +7,22 @@ namespace TwentyMate.Core;
 
 /// <summary>
 /// Рисует значок трея: та же плитка, что и в иконке приложения — скруглённый
-/// квадрат с белым глазом. Чем ближе перерыв, тем сильнее квадрат теряет синеву
-/// и уходит в серый; после перерыва цикл начинается заново.
+/// квадрат с глазом. Чем ближе перерыв, тем сильнее квадрат теряет синеву
+/// и уходит в серый; на самом перерыве плитка догорает до графита, а глаз
+/// загорается красным. После перерыва цикл начинается заново.
 /// </summary>
 /// <remarks>
-/// Палитра проверена по WCAG 2.1. Контраст белого глаза с плиткой держится
-/// в диапазоне 4.8:1 — 5.3:1 на всём переходе, то есть проходит даже строгий
-/// порог 4.5:1 для текста. Контраст самой плитки с тёмной панелью задач —
+/// Палитра проверена по WCAG 2.1. На переходе «синяя → серая» контраст белого
+/// глаза с плиткой держится в диапазоне 4.8:1 — 5.3:1, то есть проходит даже
+/// строгий порог 4.5:1 для текста; контраст самой плитки с тёмной панелью задач —
 /// 3.1:1 — 3.4:1, со светлой — 4.3:1 — 4.8:1, при пороге 3:1 для графики.
 /// Переход почти не меняет светлоту, поэтому контраст не проседает в середине.
+///
+/// На перерыве светлота меняется сознательно: красный глаз и серая плитка
+/// одинаково светлы, различить их нельзя, поэтому плитка уходит в графит.
+/// Контраст красного глаза с ней — 3.2:1, порог для графики выдержан. Сама
+/// графитовая плитка на тёмной панели задач даёт лишь 1.7:1, но информацию
+/// несёт глаз, а он контрастен с любой панелью: 5.3:1 с тёмной, 8.6:1 со светлой.
 /// </remarks>
 public sealed class TrayIconFactory : IDisposable
 {
@@ -29,6 +36,16 @@ public sealed class TrayIconFactory : IDisposable
     // Конец цикла — та же светлота, но без цвета.
     private static readonly Color SpentTop = Color.FromArgb(0x6B, 0x72, 0x80);
     private static readonly Color SpentBottom = Color.FromArgb(0x67, 0x6E, 0x7C);
+
+    // Перерыв — крайняя точка за серым: плитка гаснет, глаз загорается.
+    private static readonly Color BreakTop = Color.FromArgb(0x3E, 0x44, 0x51);
+    private static readonly Color BreakBottom = Color.FromArgb(0x3A, 0x40, 0x4C);
+
+    private static readonly Color CalmEye = Color.White;
+    private static readonly Color AlertEye = Color.FromArgb(0xFF, 0x5A, 0x4F);
+
+    // Доля перерыва, за которую серый догорает до сигнала «пора» — дальше держим предел.
+    private const double BreakFadeInFraction = 0.2;
 
     // Доли от стороны плитки — совпадают с Assets/generate-icon.py.
     private const float CornerRatio = 0.22f;
@@ -62,7 +79,9 @@ public sealed class TrayIconFactory : IDisposable
             _ => step / 32.0,
         };
 
-        var icon = Render(Lerp(FreshTop, SpentTop, fade), Lerp(FreshBottom, SpentBottom, fade));
+        var icon = state is SchedulerState.Break
+            ? RenderBreak(step / 32.0)
+            : Render(Lerp(FreshTop, SpentTop, fade), Lerp(FreshBottom, SpentBottom, fade), CalmEye);
 
         var previous = _current;
         _current = icon;
@@ -70,6 +89,21 @@ public sealed class TrayIconFactory : IDisposable
         Dispose(previous);
 
         return icon;
+    }
+
+    /// <summary>
+    /// Переход в сигнал «пора»: серая плитка с белым глазом (как на исходе рабочей
+    /// фазы) плавно догорает до графита с красным глазом за первую пятую перерыва,
+    /// дальше держится предельным — резкий скачок цвета в начале перерыва иначе
+    /// выглядел бы как сбой, а не как переход.
+    /// </summary>
+    private Icon RenderBreak(double progress)
+    {
+        var fade = Math.Clamp(progress / BreakFadeInFraction, 0, 1);
+        return Render(
+            Lerp(SpentTop, BreakTop, fade),
+            Lerp(SpentBottom, BreakBottom, fade),
+            Lerp(CalmEye, AlertEye, fade));
     }
 
     private static Color Lerp(Color from, Color to, double t)
@@ -81,7 +115,7 @@ public sealed class TrayIconFactory : IDisposable
             (byte)Math.Round(from.B + (to.B - from.B) * t));
     }
 
-    private Icon Render(Color top, Color bottom)
+    private Icon Render(Color top, Color bottom, Color eye)
     {
         using var bitmap = new Bitmap(_size, _size);
         using var g = Graphics.FromImage(bitmap);
@@ -93,7 +127,7 @@ public sealed class TrayIconFactory : IDisposable
         var tile = new RectangleF(inset, inset, _size - inset * 2, _size - inset * 2);
 
         DrawTile(g, tile, top, bottom);
-        DrawEye(g, tile);
+        DrawEye(g, tile, eye);
 
         return ToIcon(bitmap);
     }
@@ -112,8 +146,8 @@ public sealed class TrayIconFactory : IDisposable
         g.FillPath(brush, path);
     }
 
-    /// <summary>Глаз-«линза»: две зеркальные дуги и зрачок, всегда белые.</summary>
-    private static void DrawEye(Graphics g, RectangleF tile)
+    /// <summary>Глаз-«линза»: две зеркальные дуги и зрачок.</summary>
+    private static void DrawEye(Graphics g, RectangleF tile, Color color)
     {
         var side = tile.Width;
         var cx = tile.Left + side / 2;
@@ -127,7 +161,7 @@ public sealed class TrayIconFactory : IDisposable
         var angle = (float)(Math.Atan2(offset, halfWidth) * 180 / Math.PI);
         var sweep = 180 - angle * 2;
 
-        using var pen = new Pen(Color.White, side * StrokeRatio)
+        using var pen = new Pen(color, side * StrokeRatio)
         {
             StartCap = LineCap.Round,
             EndCap = LineCap.Round,
@@ -142,7 +176,8 @@ public sealed class TrayIconFactory : IDisposable
         g.DrawArc(pen, fromAbove, angle, sweep);
 
         var pupil = side * PupilRadiusRatio * 2;
-        g.FillEllipse(Brushes.White, cx - pupil / 2, cy - pupil / 2, pupil, pupil);
+        using var brush = new SolidBrush(color);
+        g.FillEllipse(brush, cx - pupil / 2, cy - pupil / 2, pupil, pupil);
     }
 
     private static GraphicsPath RoundedRect(RectangleF rect, float radius)

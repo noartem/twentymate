@@ -48,6 +48,11 @@ public sealed class TrayController : IDisposable
 
     public void Start()
     {
+        // Установщик включает автозапуск ключом Run ещё до первого запуска, когда файла
+        // настроек нет. Принимаем ключ за источник истины, иначе стёрли бы его здесь же.
+        if (!_settings.LaunchAtLogin && StartupManager.IsEnabled)
+            _settings.LaunchAtLogin = true;
+
         StartupManager.TrySet(_settings.LaunchAtLogin);
         _scheduler.Start();
         RefreshIcon();
