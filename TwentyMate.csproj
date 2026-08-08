@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <!-- Неявные using выключены намеренно: WinForms добавляет System.Drawing и
+         System.Windows.Forms, чьи Color/Brush/Application конфликтуют с типами WPF. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- WinForms тянет System.Drawing и System.Windows.Forms в global usings и
+         конфликтует с типами WPF (Application, Color, Brush). Импортируем их точечно. -->
+    <DisableImplicitNamespaceImports_WindowsForms>true</DisableImplicitNamespaceImports_WindowsForms>
+    <AssemblyName>TwentyMate</AssemblyName>
+    <RootNamespace>TwentyMate</RootNamespace>
+    <Version>1.0.0</Version>
+    <Product>TwentyMate</Product>
+    <Company>TwentyMate</Company>
+    <Description>Напоминания о перерывах для глаз по правилу 20-20-20</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- WFAC010 требует задавать DPI через WinForms API, но окна здесь только WPF:
+         PerMonitorV2 объявляем в манифесте. -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+  </PropertyGroup>
+
+</Project>

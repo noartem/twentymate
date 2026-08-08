@@ -1,0 +1,122 @@
+<Window x:Class="TwentyMate.Views.BreakWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:TwentyMate.Controls"
+        Title="TwentyMate"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowStartupLocation="Manual"
+        Opacity="0"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Ideal">
+
+    <Grid>
+        <!-- Затемняющая подложка: к краям темнее, в центре чуть светлее -->
+        <Grid.Background>
+            <RadialGradientBrush GradientOrigin="0.5,0.45" Center="0.5,0.45" RadiusX="0.85" RadiusY="0.95">
+                <GradientStop Color="#F2141A22" Offset="0" />
+                <GradientStop Color="#FA0B0E13" Offset="1" />
+            </RadialGradientBrush>
+        </Grid.Background>
+
+        <!-- Мягкое свечение акцентом за кольцом -->
+        <Ellipse Width="620" Height="620"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Margin="0,-40,0,0"
+                 IsHitTestVisible="False">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="{DynamicResource AccentColor}" Offset="0" />
+                    <GradientStop Color="#00000000" Offset="0.62" />
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+            <Ellipse.OpacityMask>
+                <RadialGradientBrush>
+                    <GradientStop Color="#38FFFFFF" Offset="0" />
+                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                </RadialGradientBrush>
+            </Ellipse.OpacityMask>
+        </Ellipse>
+
+        <StackPanel x:Name="ContentRoot"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    RenderTransformOrigin="0.5,0.5">
+            <StackPanel.RenderTransform>
+                <ScaleTransform x:Name="ContentScale" ScaleX="0.94" ScaleY="0.94" />
+            </StackPanel.RenderTransform>
+
+            <!-- Кольцо обратного отсчёта -->
+            <Grid Width="240" Height="240" HorizontalAlignment="Center">
+                <controls:ProgressRingArc x:Name="Ring"
+                                          Thickness="10"
+                                          TrackBrush="#1FFFFFFF"
+                                          ArcBrush="{DynamicResource AccentBrush}" />
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock x:Name="CountdownText"
+                               Text="20"
+                               FontFamily="Segoe UI Variable Display, Segoe UI"
+                               FontSize="72"
+                               FontWeight="SemiBold"
+                               Foreground="#FFFFFFFF"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="секунд"
+                               FontFamily="Segoe UI Variable Text, Segoe UI"
+                               FontSize="14"
+                               Foreground="#8CFFFFFF"
+                               HorizontalAlignment="Center"
+                               Margin="0,-6,0,0" />
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="Отдых для глаз"
+                       FontFamily="Segoe UI Variable Display, Segoe UI"
+                       FontSize="34"
+                       FontWeight="SemiBold"
+                       Foreground="#FFFFFFFF"
+                       HorizontalAlignment="Center"
+                       Margin="0,36,0,0" />
+
+            <TextBlock Text="Посмотрите на объект метрах в шести — и просто моргайте"
+                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                       FontSize="16"
+                       Foreground="#A8FFFFFF"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       MaxWidth="460"
+                       Margin="0,10,0,0" />
+
+            <StackPanel x:Name="Actions"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,36,0,0">
+                <Button x:Name="PostponeButton"
+                        Style="{StaticResource SecondaryButton}"
+                        Content="Отложить"
+                        MinWidth="132"
+                        Margin="0,0,12,0"
+                        Background="#1AFFFFFF"
+                        BorderBrush="#33FFFFFF"
+                        Foreground="#FFFFFFFF"
+                        Click="OnPostpone" />
+                <Button x:Name="SkipButton"
+                        Style="{StaticResource AccentButton}"
+                        Content="Пропустить"
+                        MinWidth="132"
+                        Click="OnSkip" />
+            </StackPanel>
+
+            <TextBlock x:Name="HintText"
+                       Text="Esc — пропустить перерыв"
+                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                       FontSize="12"
+                       Foreground="#66FFFFFF"
+                       HorizontalAlignment="Center"
+                       Margin="0,24,0,0" />
+        </StackPanel>
+    </Grid>
+</Window>

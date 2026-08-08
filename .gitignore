@@ -1,0 +1,14 @@
+# Результаты сборки
+bin/
+obj/
+dist/
+
+# Пользовательские файлы Visual Studio / Rider
+*.user
+*.suo
+.vs/
+.idea/
+*.DotSettings.user
+
+# Локальные артефакты
+*.log

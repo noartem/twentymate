@@ -1,0 +1,5 @@
+# Проект собирается только под Windows — держим CRLF и в рабочей копии, и в индексе.
+* text eol=crlf
+
+*.ico binary
+*.png binary
