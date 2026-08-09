@@ -1,0 +1,118 @@
+# CI/CD: сборка, проверка форматирования и установщик TwentyMate.
+#
+# - На каждый push/PR: restore → dotnet format --verify-no-changes → build (-warnaserror).
+# - Затем всегда собирается установщик (Installer\build-installer.ps1) и
+#   выкладывается как build-артефакт — можно скачать и проверить установщик
+#   из любого прогона, не только релизного.
+# - При пуше тега вида vX.Y.Z дополнительно публикуется GitHub Release
+#   с прикреплённым установщиком; версия установщика берётся из тега.
+#
+# Тестов пока нет (см. TODO.md) — этот пайплайн не запускает `dotnet test`.
+# `dotnet format --verify-no-changes` временно выполняет роль lint-гейта.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Сборка и проверки
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Установка .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore TwentyMate.csproj
+
+      # Проекта .sln нет — работаем с .csproj напрямую (см. README.md).
+      # Репозиторий сейчас format-clean, поэтому гейт включаем сразу.
+      - name: Проверка форматирования (dotnet format)
+        run: dotnet format TwentyMate.csproj --verify-no-changes --verbosity diagnostic
+
+      # -warnaserror ловит новые предупреждения, но не трогает то, что уже
+      # подавлено через <NoWarn> в csproj (например WFAC010) — NoWarn всегда
+      # приоритетнее warnaserror.
+      - name: Build (Release, warnings as errors)
+        run: dotnet build TwentyMate.csproj -c Release --no-restore -warnaserror
+
+  installer:
+    name: Сборка установщика
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Установка .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # Chocolatey предустановлен на windows-latest, работает без прав
+      # администратора и без интерактивных подтверждений (в отличие от winget
+      # на хостед-раннерах). build-installer.ps1 сам находит ISCC.exe по
+      # стандартному пути Program Files (x86)\Inno Setup 6 — доустраивать
+      # PATH в этом шаге не нужно.
+      - name: Установка Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      # Если сборка запущена по тегу vX.Y.Z — версия установщика берётся из
+      # тега (гарантирует совпадение релиза и версии внутри exe), иначе —
+      # версия по умолчанию из <Version> в TwentyMate.csproj.
+      - name: Сборка установщика
+        shell: pwsh
+        run: |
+          $ver = if ($env:GITHUB_REF -like 'refs/tags/v*') {
+            $env:GITHUB_REF -replace '^refs/tags/v', ''
+          } else {
+            $null
+          }
+          if ($ver) {
+            Write-Host "Версия из тега: $ver"
+            & Installer\build-installer.ps1 -Version $ver
+          } else {
+            & Installer\build-installer.ps1
+          }
+
+      - name: Публикация артефакта
+        uses: actions/upload-artifact@v4
+        with:
+          name: TwentyMate-Setup
+          path: dist/TwentyMate-Setup-*.exe
+          if-no-files-found: error
+
+  release:
+    name: Публикация GitHub Release
+    needs: installer
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Скачать установщик
+        uses: actions/download-artifact@v4
+        with:
+          name: TwentyMate-Setup
+          path: dist
+
+      - name: Создать релиз
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/TwentyMate-Setup-*.exe
+          generate_release_notes: true
