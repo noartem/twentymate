@@ -30,6 +30,7 @@ public sealed class BreakScheduler
     private DateTime _phaseEndsAt;
     private TimeSpan _phaseLength;
     private DateTime? _pausedUntil;
+    private bool _pausedByIdle;
 
     public BreakScheduler(AppSettings settings)
     {
@@ -53,6 +54,9 @@ public sealed class BreakScheduler
 
     /// <summary>Когда пауза закончится сама (null — пауза бессрочная).</summary>
     public DateTime? PausedUntil => _pausedUntil;
+
+    /// <summary>Пауза поставлена автоматически из-за простоя, а не вручную пользователем.</summary>
+    public bool IsPausedByIdle => _pausedByIdle;
 
     public event EventHandler? Ticked;
     public event EventHandler? StateChanged;
@@ -120,6 +124,7 @@ public sealed class BreakScheduler
     /// <summary>Пауза до отдельного вызова <see cref="Resume"/> или до указанного момента.</summary>
     public void Pause(TimeSpan? duration = null)
     {
+        _pausedByIdle = false;
         _pausedUntil = duration.HasValue ? DateTime.Now + duration.Value : null;
         Remaining = duration ?? TimeSpan.Zero;
         _phaseLength = duration ?? TimeSpan.Zero;
@@ -132,6 +137,7 @@ public sealed class BreakScheduler
 
     public void Resume()
     {
+        _pausedByIdle = false;
         _pausedUntil = null;
         BeginWorkPhase();
     }
@@ -157,6 +163,14 @@ public sealed class BreakScheduler
         switch (State)
         {
             case SchedulerState.Paused:
+                if (_pausedByIdle)
+                {
+                    if (!_settings.AutoPauseOnIdle ||
+                        IdleDetector.GetIdleTime() < TimeSpan.FromMinutes(_settings.IdleThresholdMinutes))
+                        Resume();
+                    break;
+                }
+
                 if (_pausedUntil is { } until)
                 {
                     Remaining = until - now;
@@ -173,6 +187,16 @@ public sealed class BreakScheduler
                 {
                     Remaining = TimeSpan.Zero;
                     SetState(SchedulerState.OffHours);
+                    break;
+                }
+
+                if (_settings.AutoPauseOnIdle &&
+                    IdleDetector.GetIdleTime() >= TimeSpan.FromMinutes(_settings.IdleThresholdMinutes))
+                {
+                    _pausedByIdle = true;
+                    _pausedUntil = null;
+                    Remaining = TimeSpan.Zero;
+                    SetState(SchedulerState.Paused);
                     break;
                 }
 

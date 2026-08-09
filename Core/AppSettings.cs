@@ -46,6 +46,10 @@ public sealed class AppSettings
     /// <summary>Индексы соответствуют <see cref="DayOfWeek"/>: 0 — воскресенье.</summary>
     public bool[] WorkDays { get; set; } = [false, true, true, true, true, true, false];
 
+    // --- Автопауза ---
+    public bool AutoPauseOnIdle { get; set; }
+    public int IdleThresholdMinutes { get; set; } = 5;
+
     // --- Общее ---
     public bool LaunchAtLogin { get; set; }
     public AppTheme Theme { get; set; } = AppTheme.System;
@@ -72,6 +76,7 @@ public sealed class AppSettings
         IntervalMinutes = Math.Clamp(IntervalMinutes, 5, 120);
         BreakSeconds = Math.Clamp(BreakSeconds, 5, 600);
         PostponeMinutes = Math.Clamp(PostponeMinutes, 1, 60);
+        IdleThresholdMinutes = Math.Clamp(IdleThresholdMinutes, 1, 60);
 
         if (WorkDays is not { Length: 7 })
             WorkDays = [false, true, true, true, true, true, false];

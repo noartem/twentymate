@@ -81,6 +81,7 @@ public sealed class TrayController : IDisposable
         var text = _scheduler.State switch
         {
             SchedulerState.Break => $"Перерыв — {FormatClock(_scheduler.Remaining)}",
+            SchedulerState.Paused when _scheduler.IsPausedByIdle => "Пауза — нет активности",
             SchedulerState.Paused when _scheduler.PausedUntil is { } until =>
                 $"Пауза до {until:HH:mm}",
             SchedulerState.Paused => "Пауза",

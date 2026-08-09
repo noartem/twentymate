@@ -290,6 +290,55 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ───────── Автопауза ───────── -->
+                <TextBlock Text="Автопауза" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <Grid Style="{StaticResource Row}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Ставить на паузу при простое" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="Останавливает отсчёт, если вы отошли от компьютера, и продолжает при активности"
+                                           Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                            </StackPanel>
+                            <ToggleButton x:Name="AutoPauseToggle" Grid.Column="1"
+                                          Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
+                        </Grid>
+
+                        <StackPanel x:Name="AutoPausePanel">
+                            <Border Style="{StaticResource RowDivider}" />
+
+                            <Grid Style="{StaticResource Row}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="240" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Порог простоя" Style="{StaticResource BodyText}" />
+                                    <TextBlock Text="Через сколько минут без мыши и клавиатуры ставить на паузу"
+                                               Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <Grid Grid.Column="1" VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="64" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider x:Name="IdleThresholdSlider" Style="{StaticResource FluentSlider}"
+                                            Minimum="1" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True"
+                                            ValueChanged="OnSettingChanged" />
+                                    <TextBlock Grid.Column="1" Style="{StaticResource BodyText}"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="{Binding Value, ElementName=IdleThresholdSlider, StringFormat={}{0:0} мин}" />
+                                </Grid>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
                 <!-- ───────── Общее ───────── -->
                 <TextBlock Text="Общее" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
                 <Border Style="{StaticResource Card}">
@@ -337,7 +386,7 @@
                         <TextBlock x:Name="StatsText" Style="{StaticResource CaptionText}"
                                    Text="Перерывов сегодня: 0" />
                         <TextBlock Style="{StaticResource CaptionText}" Margin="0,2,0,0"
-                                   Text="TwentyMate 1.0 · настройки хранятся в %APPDATA%\TwentyMate" />
+                                   Text="TwentyMate 1.1 · настройки хранятся в %APPDATA%\TwentyMate" />
                     </StackPanel>
                     <Button Grid.Column="1" Style="{StaticResource SecondaryButton}"
                             Content="Сбросить" MinWidth="96" Click="OnReset" />

@@ -80,11 +80,15 @@ public partial class SettingsWindow : Window
         WorkEndBox.Text = _settings.WorkEnd;
         for (var i = 0; i < 7; i++) _dayChips[i].IsChecked = _settings.WorkDays[i];
 
+        AutoPauseToggle.IsChecked = _settings.AutoPauseOnIdle;
+        IdleThresholdSlider.Value = _settings.IdleThresholdMinutes;
+
         AutostartToggle.IsChecked = _settings.LaunchAtLogin || StartupManager.IsEnabled;
         ThemeCombo.SelectedIndex = (int)_settings.Theme;
 
         _loading = false;
         UpdateWorkHoursAvailability();
+        UpdateAutoPauseAvailability();
         UpdateStats();
     }
 
@@ -128,6 +132,9 @@ public partial class SettingsWindow : Window
         _settings.WorkEnd = NormalizeTime(WorkEndBox.Text, _settings.WorkEnd);
         for (var i = 0; i < 7; i++) _settings.WorkDays[i] = _dayChips[i].IsChecked is true;
 
+        _settings.AutoPauseOnIdle = AutoPauseToggle.IsChecked is true;
+        _settings.IdleThresholdMinutes = (int)IdleThresholdSlider.Value;
+
         _settings.LaunchAtLogin = AutostartToggle.IsChecked is true;
         _settings.Theme = (AppTheme)Math.Max(0, ThemeCombo.SelectedIndex);
 
@@ -135,6 +142,7 @@ public partial class SettingsWindow : Window
         _controller.ApplySettings();
 
         UpdateWorkHoursAvailability();
+        UpdateAutoPauseAvailability();
         UpdateStatus();
     }
 
@@ -143,6 +151,13 @@ public partial class SettingsWindow : Window
         var enabled = WorkHoursToggle.IsChecked is true;
         WorkHoursPanel.IsEnabled = enabled;
         WorkHoursPanel.Opacity = enabled ? 1 : 0.45;
+    }
+
+    private void UpdateAutoPauseAvailability()
+    {
+        var enabled = AutoPauseToggle.IsChecked is true;
+        AutoPausePanel.IsEnabled = enabled;
+        AutoPausePanel.Opacity = enabled ? 1 : 0.45;
     }
 
     // ═══════════════ Статус ═══════════════
@@ -163,9 +178,11 @@ public partial class SettingsWindow : Window
                 break;
 
             case SchedulerState.Paused:
-                StatusTitle.Text = scheduler.PausedUntil is { } until
-                    ? $"Пауза до {until:HH:mm}"
-                    : "Напоминания на паузе";
+                StatusTitle.Text = scheduler.IsPausedByIdle
+                    ? "Пауза — нет активности"
+                    : scheduler.PausedUntil is { } until
+                        ? $"Пауза до {until:HH:mm}"
+                        : "Напоминания на паузе";
                 StatusSubtitle.Text = "Нажмите «Продолжить», когда вернётесь";
                 StatusRing.Value = 0;
                 break;
@@ -244,6 +261,8 @@ public partial class SettingsWindow : Window
         target.WorkStart = source.WorkStart;
         target.WorkEnd = source.WorkEnd;
         target.WorkDays = (bool[])source.WorkDays.Clone();
+        target.AutoPauseOnIdle = source.AutoPauseOnIdle;
+        target.IdleThresholdMinutes = source.IdleThresholdMinutes;
         target.LaunchAtLogin = source.LaunchAtLogin;
         target.Theme = source.Theme;
     }
