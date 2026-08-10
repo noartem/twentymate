@@ -34,7 +34,7 @@ tasks:
   installer:
     desc: Build the distributable installer (dist/TwentyMate-Setup-<version>.exe)
     cmds:
-      - powershell -ExecutionPolicy Bypass -File Installer/build-installer.ps1 {{.CLI_ARGS}}
+      - pwsh -ExecutionPolicy Bypass -File Installer/build-installer.ps1 {{.CLI_ARGS}}
 
   format:
     desc: Auto-fix formatting with dotnet format
