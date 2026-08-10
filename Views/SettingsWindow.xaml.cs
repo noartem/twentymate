@@ -9,7 +9,7 @@ namespace TwentyMate.Views;
 
 public partial class SettingsWindow : Window
 {
-    /// <summary>Подписи дней в привычном порядке с понедельника и их индексы в <see cref="DayOfWeek"/>.</summary>
+    /// <summary>Day labels in the familiar Monday-first order, with their <see cref="DayOfWeek"/> indices.</summary>
     private static readonly (string Label, int Index)[] Days =
     [
         ("Пн", 1), ("Вт", 2), ("Ср", 3), ("Чт", 4), ("Пт", 5), ("Сб", 6), ("Вс", 0),
@@ -20,8 +20,8 @@ public partial class SettingsWindow : Window
     private readonly ToggleButton[] _dayChips = new ToggleButton[7];
 
     /// <summary>
-    /// Пока идёт разбор XAML и заполнение контролов, обработчики изменений не должны срабатывать:
-    /// значения по умолчанию из шаблонов иначе перезаписали бы настройки пользователя.
+    /// While XAML parsing and control population are in progress, change handlers must not
+    /// fire: otherwise the templates' default values would overwrite the user's settings.
     /// </summary>
     private bool _loading = true;
 
@@ -42,7 +42,7 @@ public partial class SettingsWindow : Window
         UpdateStatus();
     }
 
-    // ═══════════════ Загрузка и сохранение ═══════════════
+    // ═══════════════ Loading and saving ═══════════════
 
     private void BuildDayChips()
     {
@@ -102,7 +102,7 @@ public partial class SettingsWindow : Window
     {
         if (_loading) return;
 
-        // Некорректный ввод молча откатываем к сохранённому значению.
+        // Silently roll back invalid input to the saved value.
         WorkStartBox.Text = NormalizeTime(WorkStartBox.Text, _settings.WorkStart);
         WorkEndBox.Text = NormalizeTime(WorkEndBox.Text, _settings.WorkEnd);
         SaveToSettings();
@@ -160,7 +160,7 @@ public partial class SettingsWindow : Window
         AutoPausePanel.Opacity = enabled ? 1 : 0.45;
     }
 
-    // ═══════════════ Статус ═══════════════
+    // ═══════════════ Status ═══════════════
 
     private void OnTick(object? sender, EventArgs e) => UpdateStatus();
 
@@ -212,7 +212,7 @@ public partial class SettingsWindow : Window
         StatsText.Text = $"Перерывов сегодня: {today} · всего: {_settings.BreaksTotal}";
     }
 
-    // ═══════════════ Кнопки ═══════════════
+    // ═══════════════ Buttons ═══════════════
 
     private void OnBreakNow(object sender, RoutedEventArgs e) => _controller.Scheduler.StartBreakNow();
 
@@ -234,7 +234,7 @@ public partial class SettingsWindow : Window
 
         var defaults = new AppSettings
         {
-            // Счётчики и отметку о первом запуске сохраняем — это история, а не настройка.
+            // Keep the counters and the first-run flag — that's history, not a setting.
             FirstRunDone = true,
             BreaksToday = _settings.BreaksToday,
             BreaksTotal = _settings.BreaksTotal,
@@ -267,7 +267,7 @@ public partial class SettingsWindow : Window
         target.Theme = source.Theme;
     }
 
-    // ═══════════════ Оформление окна ═══════════════
+    // ═══════════════ Window styling ═══════════════
 
     private void OnThemeChanged(object? sender, EventArgs e)
     {

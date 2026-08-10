@@ -1,9 +1,10 @@
 """
-Генератор app.ico: скруглённый квадрат с синим градиентом и белым глазом.
+app.ico generator: a rounded square with a blue gradient and a white eye.
 
-Тот же силуэт рисует TrayIconFactory для значка в трее, поэтому геометрия здесь
-и там совпадает. Палитра подобрана под WCAG: контраст белого глаза с плиткой
-не опускается ниже 4.5:1, самой плитки с тёмной панелью задач — ниже 3:1.
+TrayIconFactory draws the same silhouette for the tray icon, so the geometry
+matches between the two. The palette is tuned for WCAG: the white eye's
+contrast against the tile never drops below 4.5:1, and the tile's contrast
+against a dark taskbar never drops below 3:1.
 
     python Assets/generate-icon.py Assets/app.ico
 """
@@ -19,7 +20,7 @@ TOP = (0x17, 0x74, 0xC9)
 BOTTOM = (0x1A, 0x6F, 0xC0)
 EYE = (255, 255, 255)
 
-# Доли от стороны плитки — единый источник правды для .ico и значка в трее.
+# Fractions of the tile's side — single source of truth for the .ico and the tray icon.
 CORNER = 0.22
 LENS_RADIUS = 0.50
 LENS_OFFSET = 0.335
@@ -32,20 +33,20 @@ def clamp(v, lo=0.0, hi=1.0):
 
 
 def rounded_square_sd(x, y, half, radius):
-    """Signed distance до скруглённого квадрата с центром в нуле."""
+    """Signed distance to a rounded square centered at the origin."""
     qx = abs(x) - (half - radius)
     qy = abs(y) - (half - radius)
     return math.hypot(max(qx, 0.0), max(qy, 0.0)) + min(max(qx, qy), 0.0) - radius
 
 
 def lens_sd(x, y, radius, offset):
-    """Signed distance до «линзы» — пересечения двух окружностей."""
+    """Signed distance to the "lens" — the intersection of two circles."""
     return max(math.hypot(x, y - offset) - radius, math.hypot(x, y + offset) - radius)
 
 
 def render(size):
     half = size / 2.0
-    aa = 1.0  # ширина сглаживания в пикселях
+    aa = 1.0  # anti-aliasing width in pixels
 
     corner = size * CORNER
     stroke = max(size * STROKE, 1.0)
@@ -68,7 +69,7 @@ def render(size):
             t = (py + 0.5) / size
             r, g, b = (int(TOP[i] + (BOTTOM[i] - TOP[i]) * t) for i in range(3))
 
-            # Контур глаза — полоса вокруг границы линзы, плюс зрачок.
+            # Eye outline — a band around the lens boundary, plus the pupil.
             outline = clamp(0.5 - (abs(lens_sd(x, y, lens_r, offset)) - stroke / 2) / aa)
             pupil = clamp(0.5 - (math.hypot(x, y) - pupil_r) / aa)
             eye = max(outline, pupil)
@@ -107,7 +108,7 @@ def main(out_path):
     entries = b""
     payload = b""
     for size, data in images:
-        # В каталоге ICO размер 256 записывается нулём.
+        # In the ICO directory, size 256 is recorded as zero.
         dim = 0 if size >= 256 else size
         entries += struct.pack("<BBBBHHII", dim, dim, 0, 0, 1, 32, len(data), offset)
         payload += data
@@ -116,7 +117,7 @@ def main(out_path):
     with open(out_path, "wb") as f:
         f.write(header + entries + payload)
 
-    print(f"записано {out_path}: {len(header + entries + payload)} байт")
+    print(f"wrote {out_path}: {len(header + entries + payload)} bytes")
 
 
 if __name__ == "__main__":

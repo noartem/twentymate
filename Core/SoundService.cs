@@ -5,8 +5,8 @@ using System.Media;
 namespace TwentyMate.Core;
 
 /// <summary>
-/// Мягкие сигналы начала и конца перерыва. Звуки синтезируются в память,
-/// поэтому приложению не нужны внешние аудиофайлы.
+/// Soft chimes for the start and end of a break. Sounds are synthesized in
+/// memory, so the app doesn't need external audio files.
 /// </summary>
 public static class SoundService
 {
@@ -28,11 +28,11 @@ public static class SoundService
         }
         catch
         {
-            // Нет звукового устройства — тишина не повод падать.
+            // No audio device — silence isn't a reason to crash.
         }
     }
 
-    /// <summary>Двухнотный перезвон с плавным затуханием, чтобы не пугать резким писком.</summary>
+    /// <summary>A two-note chime with a smooth decay, so it doesn't startle with a sharp beep.</summary>
     private static byte[] BuildChime(double[] notes, double noteSeconds)
     {
         var perNote = (int)(SampleRate * noteSeconds);
@@ -47,12 +47,12 @@ public static class SoundService
                 var t = (double)i / SampleRate;
                 var position = (double)i / perNote;
 
-                // Быстрая атака и экспоненциальный спад — звук воспринимается как мягкий колокольчик.
+                // Fast attack and exponential decay — the sound reads as a soft bell.
                 var attack = Math.Min(1, position / 0.02);
                 var decay = Math.Exp(-4.5 * position);
                 var envelope = attack * decay;
 
-                // Небольшая примесь октавы делает тембр менее «электронным».
+                // A small octave overtone makes the timbre feel less "electronic".
                 var wave = Math.Sin(2 * Math.PI * frequency * t)
                            + 0.3 * Math.Sin(4 * Math.PI * frequency * t);
 
@@ -74,13 +74,13 @@ public static class SoundService
         writer.Write(36 + dataBytes);
         writer.Write("WAVE"u8.ToArray());
         writer.Write("fmt "u8.ToArray());
-        writer.Write(16);                        // размер блока fmt
+        writer.Write(16);                        // fmt block size
         writer.Write((short)1);                  // PCM
-        writer.Write((short)1);                  // моно
+        writer.Write((short)1);                  // mono
         writer.Write(SampleRate);
-        writer.Write(SampleRate * 2);            // байт в секунду
-        writer.Write((short)2);                  // выравнивание блока
-        writer.Write((short)16);                 // бит на сэмпл
+        writer.Write(SampleRate * 2);            // bytes per second
+        writer.Write((short)2);                  // block align
+        writer.Write((short)16);                 // bits per sample
         writer.Write("data"u8.ToArray());
         writer.Write(dataBytes);
 

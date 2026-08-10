@@ -6,48 +6,50 @@ using System.Runtime.InteropServices;
 namespace TwentyMate.Core;
 
 /// <summary>
-/// Рисует значок трея: та же плитка, что и в иконке приложения — скруглённый
-/// квадрат с глазом. Чем ближе перерыв, тем сильнее квадрат теряет синеву
-/// и уходит в серый; на самом перерыве плитка догорает до графита, а глаз
-/// загорается красным. После перерыва цикл начинается заново.
+/// Draws the tray icon: the same tile as the app icon — a rounded square
+/// with an eye. The closer the break gets, the more the square loses its
+/// blue and drifts toward gray; during the break itself the tile burns down
+/// to graphite and the eye lights up red. The cycle starts over after the break.
 /// </summary>
 /// <remarks>
-/// Палитра проверена по WCAG 2.1. На переходе «синяя → серая» контраст белого
-/// глаза с плиткой держится в диапазоне 4.8:1 — 5.3:1, то есть проходит даже
-/// строгий порог 4.5:1 для текста; контраст самой плитки с тёмной панелью задач —
-/// 3.1:1 — 3.4:1, со светлой — 4.3:1 — 4.8:1, при пороге 3:1 для графики.
-/// Переход почти не меняет светлоту, поэтому контраст не проседает в середине.
+/// The palette is checked against WCAG 2.1. On the "blue → gray" transition,
+/// the white eye's contrast against the tile stays in the 4.8:1 — 5.3:1 range,
+/// clearing even the strict 4.5:1 threshold for text; the tile's own contrast
+/// against a dark taskbar is 3.1:1 — 3.4:1, against a light one 4.3:1 — 4.8:1,
+/// against the 3:1 threshold for graphics. The transition barely changes
+/// lightness, so contrast doesn't dip in the middle.
 ///
-/// На перерыве светлота меняется сознательно: красный глаз и серая плитка
-/// одинаково светлы, различить их нельзя, поэтому плитка уходит в графит.
-/// Контраст красного глаза с ней — 3.2:1, порог для графики выдержан. Сама
-/// графитовая плитка на тёмной панели задач даёт лишь 1.7:1, но информацию
-/// несёт глаз, а он контрастен с любой панелью: 5.3:1 с тёмной, 8.6:1 со светлой.
+/// During the break, lightness changes deliberately: a red eye and a gray tile
+/// are equally light and can't be told apart, so the tile drifts to graphite.
+/// The red eye's contrast against it is 3.2:1, clearing the graphics threshold.
+/// The graphite tile itself only gives 1.7:1 against a dark taskbar, but the
+/// eye carries the information, and it's contrasty against any taskbar:
+/// 5.3:1 against dark, 8.6:1 against light.
 /// </remarks>
 public sealed class TrayIconFactory : IDisposable
 {
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool DestroyIcon(IntPtr handle);
 
-    // Начало цикла — синяя плитка из иконки приложения.
+    // Start of the cycle — the blue tile from the app icon.
     private static readonly Color FreshTop = Color.FromArgb(0x17, 0x74, 0xC9);
     private static readonly Color FreshBottom = Color.FromArgb(0x1A, 0x6F, 0xC0);
 
-    // Конец цикла — та же светлота, но без цвета.
+    // End of the cycle — the same lightness, but no color.
     private static readonly Color SpentTop = Color.FromArgb(0x6B, 0x72, 0x80);
     private static readonly Color SpentBottom = Color.FromArgb(0x67, 0x6E, 0x7C);
 
-    // Перерыв — крайняя точка за серым: плитка гаснет, глаз загорается.
+    // Break — the far point past gray: the tile dims, the eye lights up.
     private static readonly Color BreakTop = Color.FromArgb(0x3E, 0x44, 0x51);
     private static readonly Color BreakBottom = Color.FromArgb(0x3A, 0x40, 0x4C);
 
     private static readonly Color CalmEye = Color.White;
     private static readonly Color AlertEye = Color.FromArgb(0xFF, 0x5A, 0x4F);
 
-    // Доля перерыва, за которую серый догорает до сигнала «пора» — дальше держим предел.
+    // Fraction of the break over which gray burns down to the "time's up" signal — held after that.
     private const double BreakFadeInFraction = 0.2;
 
-    // Доли от стороны плитки — совпадают с Assets/generate-icon.py.
+    // Fractions of the tile's side — match Assets/generate-icon.py.
     private const float CornerRatio = 0.22f;
     private const float LensRadiusRatio = 0.50f;
     private const float LensOffsetRatio = 0.335f;
@@ -61,18 +63,18 @@ public sealed class TrayIconFactory : IDisposable
     public TrayIconFactory(int size = 32) => _size = size;
 
     /// <summary>
-    /// Значок для текущего состояния. Одинаковые состояния отдают тот же экземпляр,
-    /// поэтому метод можно звать хоть каждый тик таймера.
+    /// The icon for the current state. Identical states return the same instance,
+    /// so this method can be called on every timer tick.
     /// </summary>
     public Icon Get(SchedulerState state, double progress)
     {
-        // Прогресс округляем до 32 ступеней: переход цвета глаз не различит,
-        // а перерисовок становится в разы меньше.
+        // Round progress to 32 steps: an eye can't tell the color transition apart,
+        // and it cuts the number of redraws way down.
         var step = (int)Math.Round(Math.Clamp(progress, 0, 1) * 32);
         var key = $"{state}|{step}";
         if (_current is not null && key == _currentKey) return _current;
 
-        // Вне цикла — работы нет, поэтому и синевы нет: плитка сразу серая.
+        // Outside the cycle — there's no work happening, so no blue: the tile is gray right away.
         var fade = state switch
         {
             SchedulerState.Break or SchedulerState.Paused or SchedulerState.OffHours => 1.0,
@@ -92,10 +94,10 @@ public sealed class TrayIconFactory : IDisposable
     }
 
     /// <summary>
-    /// Переход в сигнал «пора»: серая плитка с белым глазом (как на исходе рабочей
-    /// фазы) плавно догорает до графита с красным глазом за первую пятую перерыва,
-    /// дальше держится предельным — резкий скачок цвета в начале перерыва иначе
-    /// выглядел бы как сбой, а не как переход.
+    /// Transition into the "time's up" signal: the gray tile with a white eye (as at
+    /// the end of the working phase) smoothly burns down to graphite with a red eye
+    /// over the break's first fifth, then holds at that limit — a sudden color jump
+    /// at the start of the break would otherwise read as a glitch rather than a transition.
     /// </summary>
     private Icon RenderBreak(double progress)
     {
@@ -122,7 +124,7 @@ public sealed class TrayIconFactory : IDisposable
 
         g.SmoothingMode = SmoothingMode.AntiAlias;
 
-        // Небольшой отступ, чтобы сглаженный край плитки не упирался в границу значка.
+        // A small inset so the tile's anti-aliased edge doesn't butt against the icon's border.
         var inset = _size * 0.02f;
         var tile = new RectangleF(inset, inset, _size - inset * 2, _size - inset * 2);
 
@@ -139,14 +141,14 @@ public sealed class TrayIconFactory : IDisposable
         using var path = RoundedRect(tile, radius);
         using var brush = new LinearGradientBrush(tile, top, bottom, LinearGradientMode.Vertical)
         {
-            // Без отражения градиент на границе прямоугольника даёт полосу артефактов.
+            // Without reflection, the gradient produces an artifact band at the rectangle's edge.
             WrapMode = WrapMode.TileFlipXY,
         };
 
         g.FillPath(brush, path);
     }
 
-    /// <summary>Глаз-«линза»: две зеркальные дуги и зрачок.</summary>
+    /// <summary>The eye "lens": two mirrored arcs and a pupil.</summary>
     private static void DrawEye(Graphics g, RectangleF tile, Color color)
     {
         var side = tile.Width;
@@ -156,7 +158,7 @@ public sealed class TrayIconFactory : IDisposable
         var radius = side * LensRadiusRatio;
         var offset = side * LensOffsetRatio;
 
-        // Точки пересечения окружностей лежат на горизонтали через центр.
+        // The circles' intersection points lie on the horizontal through the center.
         var halfWidth = (float)Math.Sqrt(radius * radius - offset * offset);
         var angle = (float)(Math.Atan2(offset, halfWidth) * 180 / Math.PI);
         var sweep = 180 - angle * 2;
@@ -167,11 +169,11 @@ public sealed class TrayIconFactory : IDisposable
             EndCap = LineCap.Round,
         };
 
-        // Верхнее веко — дуга окружности, смещённой вниз.
+        // Upper lid — an arc of the circle offset downward.
         var fromBelow = new RectangleF(cx - radius, cy + offset - radius, radius * 2, radius * 2);
         g.DrawArc(pen, fromBelow, angle - 180, sweep);
 
-        // Нижнее веко — зеркальная дуга окружности, смещённой вверх.
+        // Lower lid — the mirrored arc of the circle offset upward.
         var fromAbove = new RectangleF(cx - radius, cy - offset - radius, radius * 2, radius * 2);
         g.DrawArc(pen, fromAbove, angle, sweep);
 
@@ -199,7 +201,7 @@ public sealed class TrayIconFactory : IDisposable
         var handle = bitmap.GetHicon();
         try
         {
-            // Клонируем, чтобы владеть управляемой копией и сразу отпустить дескриптор GDI.
+            // Clone it so we own a managed copy and can release the GDI handle right away.
             using var temp = Icon.FromHandle(handle);
             return (Icon)temp.Clone();
         }

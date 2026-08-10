@@ -14,8 +14,8 @@ public enum BackdropType
 }
 
 /// <summary>
-/// Тонкая обёртка над DWM: материал подложки, скруглённые углы и тёмный режим рамки.
-/// Всё это доступно только на Windows 11, на более старых системах вызовы просто игнорируются.
+/// A thin wrapper over DWM: backdrop material, rounded corners, and dark title bar mode.
+/// All of this is only available on Windows 11; on older systems the calls are simply ignored.
 /// </summary>
 public static class WindowEffects
 {
@@ -35,11 +35,11 @@ public static class WindowEffects
         public int Left, Right, Top, Bottom;
     }
 
-    /// <summary>Windows 11 21H2 и новее — начиная с этой сборки работают Mica и скругления.</summary>
+    /// <summary>Windows 11 21H2 and later — Mica and rounded corners work starting with this build.</summary>
     public static bool IsWindows11 { get; } =
         Environment.OSVersion.Version is { Major: >= 10, Build: >= 22000 };
 
-    /// <summary>Материал подложки Mica доступен как системный атрибут с 22H2.</summary>
+    /// <summary>The Mica backdrop material is available as a system attribute starting with 22H2.</summary>
     private static bool SupportsBackdropAttribute =>
         Environment.OSVersion.Version is { Major: >= 10, Build: >= 22621 };
 
@@ -66,7 +66,7 @@ public static class WindowEffects
         DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkMode, ref value, sizeof(int));
     }
 
-    /// <summary>0 — по умолчанию, 1 — не скруглять, 2 — скруглить, 3 — малое скругление.</summary>
+    /// <summary>0 — default, 1 — no rounding, 2 — round, 3 — slight rounding.</summary>
     public static void SetCorners(IntPtr handle, int preference)
     {
         if (!IsWindows11) return;
@@ -78,8 +78,8 @@ public static class WindowEffects
     {
         if (!SupportsBackdropAttribute) return;
 
-        // DWM рисует материал только там, где окно прозрачно, поэтому фон убираем
-        // и расширяем рамку на всю клиентскую область.
+        // DWM only draws the material where the window is transparent, so we remove
+        // the background and extend the frame across the whole client area.
         var source = HwndSource.FromHwnd(handle);
         if (source?.CompositionTarget is { } target)
             target.BackgroundColor = System.Windows.Media.Colors.Transparent;

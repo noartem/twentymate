@@ -5,8 +5,8 @@ using System.Windows.Media;
 namespace TwentyMate.Controls;
 
 /// <summary>
-/// Кольцо прогресса с круглыми концами: подложка на весь круг и дуга по значению
-/// <see cref="Value"/> (0..1), отсчитываемая от 12 часов по часовой стрелке.
+/// A progress ring with rounded ends: a full-circle track and an arc for the
+/// <see cref="Value"/> (0..1), measured clockwise from 12 o'clock.
 /// </summary>
 public sealed class ProgressRingArc : FrameworkElement
 {
@@ -73,7 +73,7 @@ public sealed class ProgressRingArc : FrameworkElement
             EndLineCap = PenLineCap.Round,
         };
 
-        // Почти полный круг рисуем как окружность: ArcSegment на 360° вырождается в точку.
+        // Draw a near-full circle as an ellipse: an ArcSegment at 360° degenerates to a point.
         if (value >= 0.999)
         {
             dc.DrawEllipse(null, pen, center, radius, radius);

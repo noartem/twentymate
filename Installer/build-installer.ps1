@@ -1,21 +1,21 @@
-﻿<#
+<#
 .SYNOPSIS
-    Собирает TwentyMate и упаковывает его в установщик-мастер для распространения.
+    Builds TwentyMate and packages it into a setup wizard for distribution.
 
 .DESCRIPTION
-    Публикует приложение в dist\app и компилирует Installer\TwentyMate.iss
-    в единый dist\TwentyMate-Setup-<версия>.exe.
+    Publishes the app to dist\app and compiles Installer\TwentyMate.iss
+    into a single dist\TwentyMate-Setup-<version>.exe.
 
-    По умолчанию сборка self-contained: .NET вшит в приложение, поэтому
-    установщик работает на любой Windows 10 1809+/11 без предустановленного
-    рантайма. Нужен Inno Setup 6 (winget install JRSoftware.InnoSetup).
+    By default the build is self-contained: .NET is bundled into the app, so
+    the installer works on any Windows 10 1809+/11 without a preinstalled
+    runtime. Requires Inno Setup 6 (winget install JRSoftware.InnoSetup).
 
 .PARAMETER FrameworkDependent
-    Лёгкая сборка без вшитого .NET (~1 МБ установщик). Требует у пользователя
-    установленный .NET 8 Desktop Runtime.
+    Lightweight build without .NET bundled in (~1 MB installer). Requires
+    the user to have the .NET 8 Desktop Runtime installed.
 
 .PARAMETER Version
-    Переопределить версию. По умолчанию берётся из <Version> в TwentyMate.csproj.
+    Override the version. By default it's taken from <Version> in TwentyMate.csproj.
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File Installer\build-installer.ps1
@@ -37,14 +37,14 @@ $appDir = Join-Path $distDir "app"
 
 function Write-Step($text) { Write-Host "==> $text" -ForegroundColor Cyan }
 
-if (-not (Test-Path $project)) { throw "Не найден $project" }
-if (-not (Test-Path $iss)) { throw "Не найден $iss" }
+if (-not (Test-Path $project)) { throw "$project not found" }
+if (-not (Test-Path $iss)) { throw "$iss not found" }
 
-# ── Инструменты ───────────────────────────────────────────────────────────────
+# ── Tools ─────────────────────────────────────────────────────────────────────
 
 $dotnet = (Get-Command dotnet -ErrorAction SilentlyContinue).Source
 if (-not $dotnet) { $dotnet = "C:\Program Files\dotnet\dotnet.exe" }
-if (-not (Test-Path $dotnet)) { throw "Не найден dotnet. Установите .NET 8 SDK." }
+if (-not (Test-Path $dotnet)) { throw "dotnet not found. Install the .NET 8 SDK." }
 
 $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue).Source
 if (-not $iscc) {
@@ -55,20 +55,20 @@ if (-not $iscc) {
     ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 }
 if (-not $iscc) {
-    throw "Не найден Inno Setup 6. Установите: winget install --id JRSoftware.InnoSetup -e"
+    throw "Inno Setup 6 not found. Install it: winget install --id JRSoftware.InnoSetup -e"
 }
 
-# ── Версия ────────────────────────────────────────────────────────────────────
+# ── Version ───────────────────────────────────────────────────────────────────
 
 if (-not $Version) {
     $Version = ([xml](Get-Content $project)).Project.PropertyGroup.Version |
         Where-Object { $_ } | Select-Object -First 1
 }
-if (-not $Version) { throw "Не удалось определить версию — задайте -Version" }
+if (-not $Version) { throw "Couldn't determine the version — pass -Version" }
 
-# ── Публикация ────────────────────────────────────────────────────────────────
+# ── Publish ───────────────────────────────────────────────────────────────────
 
-Write-Step "Публикация $Version$(if (-not $FrameworkDependent) { ' со встроенным .NET' })"
+Write-Step "Publishing $Version$(if (-not $FrameworkDependent) { ' with .NET bundled in' })"
 
 if (Test-Path $appDir) { Remove-Item $appDir -Recurse -Force }
 
@@ -84,27 +84,27 @@ $publishArgs = @(
 )
 
 & $dotnet @publishArgs | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "Сборка завершилась с ошибкой" }
+if ($LASTEXITCODE -ne 0) { throw "Build failed" }
 
 $builtExe = Join-Path $appDir "TwentyMate.exe"
-if (-not (Test-Path $builtExe)) { throw "После сборки не найден $builtExe" }
+if (-not (Test-Path $builtExe)) { throw "$builtExe not found after build" }
 
 $payload = (Get-ChildItem $appDir -Recurse -File | Measure-Object Length -Sum).Sum
 
-# ── Компиляция установщика ────────────────────────────────────────────────────
+# ── Compile the installer ────────────────────────────────────────────────────
 
-Write-Step "Сборка установщика"
+Write-Step "Building installer"
 
 & $iscc "/DAppVersion=$Version" $iss | ForEach-Object {
     if ($_ -match "^\s*(Error|Warning)") { Write-Host $_ -ForegroundColor Yellow }
 }
-if ($LASTEXITCODE -ne 0) { throw "Inno Setup завершился с ошибкой" }
+if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
 
 $setup = Join-Path $distDir "TwentyMate-Setup-$Version.exe"
-if (-not (Test-Path $setup)) { throw "Установщик не найден: $setup" }
+if (-not (Test-Path $setup)) { throw "Installer not found: $setup" }
 
 $setupSize = (Get-Item $setup).Length
 
 Write-Host ""
-Write-Host "Установщик готов: $setup" -ForegroundColor Green
-Write-Host ("Размер: {0:N1} МБ (приложение — {1:N1} МБ)" -f ($setupSize / 1MB), ($payload / 1MB))
+Write-Host "Installer ready: $setup" -ForegroundColor Green
+Write-Host ("Size: {0:N1} MB (app — {1:N1} MB)" -f ($setupSize / 1MB), ($payload / 1MB))

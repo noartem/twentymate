@@ -7,8 +7,8 @@ using Forms = System.Windows.Forms;
 namespace TwentyMate.Core;
 
 /// <summary>
-/// Связывает планировщик, значок в трее и окна приложения.
-/// Это единственное место, которое решает, что показать пользователю.
+/// Wires up the scheduler, the tray icon, and the app's windows.
+/// This is the single place that decides what to show the user.
 /// </summary>
 public sealed class TrayController : IDisposable
 {
@@ -48,8 +48,9 @@ public sealed class TrayController : IDisposable
 
     public void Start()
     {
-        // Установщик включает автозапуск ключом Run ещё до первого запуска, когда файла
-        // настроек нет. Принимаем ключ за источник истины, иначе стёрли бы его здесь же.
+        // The installer enables autostart via the Run key before the first launch, when the
+        // settings file doesn't exist yet. Treat the key as the source of truth, otherwise
+        // we'd wipe it out right here.
         if (!_settings.LaunchAtLogin && StartupManager.IsEnabled)
             _settings.LaunchAtLogin = true;
 
@@ -58,7 +59,7 @@ public sealed class TrayController : IDisposable
         RefreshIcon();
     }
 
-    /// <summary>Вызывается окном настроек после изменения параметров.</summary>
+    /// <summary>Called by the settings window after parameters change.</summary>
     public void ApplySettings()
     {
         _scheduler.ApplySettings(_settings);
@@ -68,7 +69,7 @@ public sealed class TrayController : IDisposable
         RefreshIcon();
     }
 
-    // ═══════════════ Значок и подсказка ═══════════════
+    // ═══════════════ Icon and tooltip ═══════════════
 
     private void RefreshIcon()
     {
@@ -89,7 +90,7 @@ public sealed class TrayController : IDisposable
             _ => $"Следующий перерыв через {FormatClock(_scheduler.Remaining)}",
         };
 
-        // Windows обрезает подсказку значка на 127 символах.
+        // Windows truncates the tray icon tooltip at 127 characters.
         return $"TwentyMate\n{text}";
     }
 
@@ -101,7 +102,7 @@ public sealed class TrayController : IDisposable
             : $"{value.Minutes:00}:{value.Seconds:00}";
     }
 
-    // ═══════════════ Перерыв ═══════════════
+    // ═══════════════ Break ═══════════════
 
     private void OnBreakStarted()
     {
@@ -122,7 +123,7 @@ public sealed class TrayController : IDisposable
                 break;
 
             case NotificationStyle.TrayIconOnly:
-                // Достаточно изменившегося значка.
+                // The changed icon is enough on its own.
                 break;
         }
     }
@@ -170,7 +171,7 @@ public sealed class TrayController : IDisposable
         _breakWindows.Clear();
     }
 
-    // ═══════════════ Меню и окна ═══════════════
+    // ═══════════════ Menu and windows ═══════════════
 
     private void OnTrayMouseUp(object? sender, Forms.MouseEventArgs e)
     {
@@ -180,8 +181,9 @@ public sealed class TrayController : IDisposable
 
     private void ToggleMenu()
     {
-        // Клик по значку сначала снимает фокус с открытого меню, и оно закрывается само.
-        // Короткое окно после этого считаем «вторым щелчком» и меню не открываем заново.
+        // A click on the icon first removes focus from the open menu, which closes it on its
+        // own. We treat the short window right after that as a "second click" and don't
+        // reopen the menu.
         if (_menuWindow is not null || DateTime.Now - _menuClosedAt < TimeSpan.FromMilliseconds(300))
             return;
 

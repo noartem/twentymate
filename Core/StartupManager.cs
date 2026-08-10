@@ -3,7 +3,7 @@ using Microsoft.Win32;
 
 namespace TwentyMate.Core;
 
-/// <summary>Автозапуск через ключ Run текущего пользователя — не требует прав администратора.</summary>
+/// <summary>Autostart via the current user's Run key — doesn't require administrator rights.</summary>
 public static class StartupManager
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";

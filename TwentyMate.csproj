@@ -4,26 +4,26 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
-    <!-- Неявные using выключены намеренно: WinForms добавляет System.Drawing и
-         System.Windows.Forms, чьи Color/Brush/Application конфликтуют с типами WPF. -->
+    <!-- Implicit usings are disabled on purpose: WinForms adds System.Drawing and
+         System.Windows.Forms, whose Color/Brush/Application conflict with WPF's types. -->
     <ImplicitUsings>disable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <!-- WinForms тянет System.Drawing и System.Windows.Forms в global usings и
-         конфликтует с типами WPF (Application, Color, Brush). Импортируем их точечно. -->
+    <!-- WinForms pulls System.Drawing and System.Windows.Forms into global usings and
+         conflicts with WPF's types (Application, Color, Brush). Import them explicitly instead. -->
     <DisableImplicitNamespaceImports_WindowsForms>true</DisableImplicitNamespaceImports_WindowsForms>
     <AssemblyName>TwentyMate</AssemblyName>
     <RootNamespace>TwentyMate</RootNamespace>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Product>TwentyMate</Product>
     <Company>TwentyMate</Company>
-    <Description>Напоминания о перерывах для глаз по правилу 20-20-20</Description>
+    <Description>20-20-20 rule eye break reminders</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <!-- WFAC010 требует задавать DPI через WinForms API, но окна здесь только WPF:
-         PerMonitorV2 объявляем в манифесте. -->
+    <!-- WFAC010 wants DPI set via the WinForms API, but all windows here are WPF:
+         PerMonitorV2 is declared in the manifest instead. -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
   </PropertyGroup>
 

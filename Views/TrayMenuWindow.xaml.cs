@@ -10,8 +10,8 @@ using Forms = System.Windows.Forms;
 namespace TwentyMate.Views;
 
 /// <summary>
-/// Всплывающее меню значка в трее — свой вариант вместо системного
-/// контекстного меню, чтобы вписаться в оформление Windows 11.
+/// The tray icon's popup menu — a custom take instead of the system
+/// context menu, to fit in with Windows 11 styling.
 /// </summary>
 public partial class TrayMenuWindow : Window
 {
@@ -46,7 +46,7 @@ public partial class TrayMenuWindow : Window
     {
         Show();
 
-        // Размеры известны только после Show при SizeToContent.
+        // Dimensions are only known after Show with SizeToContent.
         Dispatcher.BeginInvoke(new Action(PositionNearCursor),
             System.Windows.Threading.DispatcherPriority.Loaded);
 
@@ -67,7 +67,7 @@ public partial class TrayMenuWindow : Window
         var screen = Forms.Screen.FromPoint(cursor);
         var work = screen.WorkingArea;
 
-        // ActualWidth/Height логические — переводим в пиксели этого монитора.
+        // ActualWidth/Height are logical — convert to this monitor's pixels.
         var source = PresentationSource.FromVisual(this);
         var scaleX = source?.CompositionTarget?.TransformToDevice.M11 ?? 1;
         var scaleY = source?.CompositionTarget?.TransformToDevice.M22 ?? 1;
@@ -75,7 +75,7 @@ public partial class TrayMenuWindow : Window
         var width = (int)Math.Ceiling(ActualWidth * scaleX);
         var height = (int)Math.Ceiling(ActualHeight * scaleY);
 
-        // Прижимаем к тому углу рабочей области, где стоит панель задач.
+        // Snap to whichever corner of the working area the taskbar is on.
         var x = Math.Clamp(cursor.X - width / 2, work.Left, work.Right - width);
         var y = cursor.Y > work.Top + work.Height / 2
             ? work.Bottom - height
@@ -184,8 +184,8 @@ public partial class TrayMenuWindow : Window
     }
 
     /// <summary>
-    /// Закрывает меню ровно один раз: потеря фокуса приходит и во время самого закрытия,
-    /// а повторный Close из обработчика Deactivated роняет WPF.
+    /// Closes the menu exactly once: focus loss also fires during closing itself,
+    /// and a repeated Close from the Deactivated handler crashes WPF.
     /// </summary>
     private void CloseMenu()
     {

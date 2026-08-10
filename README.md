@@ -1,79 +1,80 @@
 # TwentyMate
 
-Напоминания о перерывах для глаз по правилу 20-20-20, живущие в системном трее.
+20-20-20 eye break reminders that live in the system tray.
 
-Нативное WPF-приложение на .NET 8 без сторонних зависимостей. Оформление — Fluent:
-подложка Mica, скруглённые углы, системный акцентный цвет и автоматическое
-переключение светлой и тёмной темы вслед за Windows.
+A native WPF application on .NET 8 with no third-party dependencies. Fluent
+styling — Mica backdrop, rounded corners, system accent color, and automatic
+light/dark theme switching following Windows.
 
-## Возможности
+## Features
 
-| Возможность | Описание |
+| Feature | Description |
 |---|---|
-| Значок в трее | Плитка логотипа: белый глаз на квадрате, который выцветает из синего в серый по мере приближения перерыва и синеет заново после него; своё меню в стиле Windows 11 вместо системного контекстного |
-| Три способа напоминания | Только значок · системное уведомление · полноэкранная заставка с кольцом отсчёта |
-| Расписание | Интервал 5–120 минут, длительность перерыва 5–300 секунд |
-| Рабочие часы | Диапазон времени (в том числе через полночь) и дни недели |
-| Управление | Перерыв сейчас, пропустить, отложить, пауза на 30 мин / 1 ч / 2 ч / до завтра |
-| Звук | Мягкий перезвон в начале и в конце перерыва, синтезируется на лету |
-| Прочее | Автозапуск при входе в Windows, затемнение всех мониторов, счётчик перерывов |
+| Tray icon | Logo tile: a white eye on a square that fades from blue to gray as the break approaches and turns blue again after it; its own Windows 11-style menu instead of the system context menu |
+| Three reminder modes | Icon only · system notification · fullscreen overlay with a countdown ring |
+| Schedule | 5–120 minute interval, 5–300 second break duration |
+| Working hours | Time range (including spans past midnight) and days of the week |
+| Controls | Break now, skip, snooze, pause for 30 min / 1 h / 2 h / until tomorrow |
+| Sound | Soft chime at the start and end of a break, synthesized on the fly |
+| Other | Auto-start on Windows sign-in, dim all monitors, break counter |
 
-## Установка
+## Installation
 
-Скачайте `TwentyMate-Setup-<версия>.exe` со страницы
-[Releases](https://github.com/noartem/twentymate/releases) и запустите —
-установка не требует прав администратора. Установщик автоматически
-собирается и публикуется GitHub Actions при пуше тега вида `v1.1.0`.
+Download `TwentyMate-Setup-<version>.exe` from the
+[Releases](https://github.com/noartem/twentymate/releases) page and run it —
+installation doesn't require administrator rights. The installer is built and
+published automatically by GitHub Actions when a tag like `v1.1.0` is pushed.
 
-Собрать установщик самостоятельно можно так же, как описано ниже, в разделе
-«Сборка установщика для распространения».
+You can also build the installer yourself, as described below in the
+"Building the installer for distribution" section.
 
-## Сборка установщика для распространения
+## Building the installer for distribution
 
 ```bash
 powershell -ExecutionPolicy Bypass -File Installer\build-installer.ps1
 ```
 
-Публикует приложение в `dist\app` и компилирует
-`dist\TwentyMate-Setup-<версия>.exe` (~47 МБ) — один файл, который можно
-выложить в интернет. Версия берётся из `<Version>` в `TwentyMate.csproj`
-(можно переопределить ключом `-Version`), ключ `-FrameworkDependent` собирает
-лёгкий вариант без вшитого .NET.
+Publishes the app to `dist\app` and compiles
+`dist\TwentyMate-Setup-<version>.exe` (~47 MB) — a single file you can put up
+online. The version is taken from `<Version>` in `TwentyMate.csproj`
+(can be overridden with the `-Version` flag); the `-FrameworkDependent` flag
+builds a lightweight variant without .NET bundled in.
 
-Нужен [Inno Setup 6](https://jrsoftware.org/isinfo.php):
+Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php):
 
 ```bash
 winget install --id JRSoftware.InnoSetup -e
 ```
 
-Установщик не подписан, поэтому при первом скачивании Windows SmartScreen
-покажет предупреждение «Неизвестный издатель». Чтобы его убрать, файл нужно
-подписать сертификатом Code Signing (OV — репутация набирается по числу
-скачиваний, EV — доверие сразу).
+The installer isn't signed, so on first download Windows SmartScreen will
+show an "Unknown publisher" warning. To remove it, the file needs to be
+signed with a Code Signing certificate (OV — reputation builds up with
+download count, EV — instant trust).
 
-## Сборка для разработки
+## Building for development
 
 ```bash
 dotnet build -c Release
 ```
 
-Готовый `TwentyMate.exe` появится в `bin/Release/net8.0-windows/`.
-Нужен .NET 8 SDK; для запуска обычной сборки — .NET 8 Desktop Runtime.
+The built `TwentyMate.exe` will appear in `bin/Release/net8.0-windows/`.
+Requires the .NET 8 SDK; running a regular build requires the .NET 8 Desktop
+Runtime.
 
-## Как устроено
+## How it's organized
 
-| Файл | Назначение |
+| File | Purpose |
 |---|---|
-| [Core/BreakScheduler.cs](Core/BreakScheduler.cs) | Состояния работы, перерыва, паузы и нерабочих часов |
-| [Core/TrayController.cs](Core/TrayController.cs) | Связывает планировщик, значок и окна — решает, что показать |
-| [Core/TrayIconFactory.cs](Core/TrayIconFactory.cs) | Рисует плитку логотипа в трее на GDI+, ведёт её цвет по прогрессу и кэширует результат |
-| [Assets/generate-icon.py](Assets/generate-icon.py) | Пересобирает `app.ico` из той же геометрии и палитры, что и значок в трее |
-| [Core/ThemeManager.cs](Core/ThemeManager.cs) | Палитра и акцентный цвет, синхронизация с системой |
-| [Core/WindowEffects.cs](Core/WindowEffects.cs) | Mica, скруглённые углы и тёмная рамка через DWM |
-| [Views/BreakWindow.xaml](Views/BreakWindow.xaml) | Полноэкранная заставка перерыва |
-| [Views/TrayMenuWindow.xaml](Views/TrayMenuWindow.xaml) | Всплывающее меню значка |
-| [Views/SettingsWindow.xaml](Views/SettingsWindow.xaml) | Окно настроек |
-| [Installer/TwentyMate.iss](Installer/TwentyMate.iss) | Сценарий мастера установки для Inno Setup |
-| [Themes/Fluent.xaml](Themes/Fluent.xaml) | Стили контролов в духе Windows 11 |
+| [Core/BreakScheduler.cs](Core/BreakScheduler.cs) | Working, break, pause, and non-working-hours states |
+| [Core/TrayController.cs](Core/TrayController.cs) | Wires up the scheduler, icon, and windows — decides what to show |
+| [Core/TrayIconFactory.cs](Core/TrayIconFactory.cs) | Draws the tray logo tile with GDI+, tracks its color by progress, and caches the result |
+| [Assets/generate-icon.py](Assets/generate-icon.py) | Rebuilds `app.ico` from the same geometry and palette as the tray icon |
+| [Core/ThemeManager.cs](Core/ThemeManager.cs) | Palette and accent color, synced with the system |
+| [Core/WindowEffects.cs](Core/WindowEffects.cs) | Mica, rounded corners, and dark border via DWM |
+| [Views/BreakWindow.xaml](Views/BreakWindow.xaml) | Fullscreen break overlay |
+| [Views/TrayMenuWindow.xaml](Views/TrayMenuWindow.xaml) | The tray icon's popup menu |
+| [Views/SettingsWindow.xaml](Views/SettingsWindow.xaml) | Settings window |
+| [Installer/TwentyMate.iss](Installer/TwentyMate.iss) | Inno Setup installer wizard script |
+| [Themes/Fluent.xaml](Themes/Fluent.xaml) | Windows 11-style control styles |
 
-Настройки и лог ошибок лежат в `%APPDATA%\TwentyMate\`.
+Settings and the error log live in `%APPDATA%\TwentyMate\`.
