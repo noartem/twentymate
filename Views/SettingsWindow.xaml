@@ -49,19 +49,19 @@
                 </Grid>
 
                 <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="StatusTitle" Text="Перерыв через 20:00"
+                    <TextBlock x:Name="StatusTitle" Text="{DynamicResource Settings_Status_NextBreak}"
                                Style="{StaticResource TitleText}"
                                FontSize="19"
                                TextTrimming="CharacterEllipsis" />
-                    <TextBlock x:Name="StatusSubtitle" Text="Правило 20-20-20 бережёт глаза"
+                    <TextBlock x:Name="StatusSubtitle" Text="{DynamicResource Settings_Status_NextBreakSubtitle}"
                                Style="{StaticResource CaptionText}" Margin="0,4,0,0" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="PauseButton" Style="{StaticResource SecondaryButton}"
-                            Content="Пауза" MinWidth="96" Margin="0,0,8,0" Click="OnTogglePause" />
+                            Content="{DynamicResource Action_Pause}" MinWidth="96" Margin="0,0,8,0" Click="OnTogglePause" />
                     <Button Style="{StaticResource AccentButton}"
-                            Content="Перерыв" MinWidth="96" Click="OnBreakNow" />
+                            Content="{DynamicResource Settings_HeaderCard_BreakNowButton}" MinWidth="96" Click="OnBreakNow" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -71,7 +71,7 @@
             <StackPanel Margin="0,8,6,0">
 
                 <!-- ───────── Расписание ───────── -->
-                <TextBlock Text="Расписание" Style="{StaticResource SectionText}" />
+                <TextBlock Text="{DynamicResource Settings_Section_Schedule}" Style="{StaticResource SectionText}" />
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <Grid Style="{StaticResource Row}">
@@ -80,8 +80,8 @@
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Интервал между перерывами" Style="{StaticResource BodyText}" />
-                                <TextBlock Text="Классика правила 20-20-20 — каждые 20 минут"
+                                <TextBlock Text="{DynamicResource Settings_Interval_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_Interval_Desc}"
                                            Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                             </StackPanel>
                             <Grid Grid.Column="1" VerticalAlignment="Center">
@@ -92,10 +92,9 @@
                                 <Slider x:Name="IntervalSlider" Style="{StaticResource FluentSlider}"
                                         Minimum="5" Maximum="120" TickFrequency="1" IsSnapToTickEnabled="True"
                                         ValueChanged="OnSettingChanged" />
-                                <TextBlock Grid.Column="1" Style="{StaticResource BodyText}"
+                                <TextBlock x:Name="IntervalValueText" Grid.Column="1" Style="{StaticResource BodyText}"
                                            HorizontalAlignment="Right" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Text="{Binding Value, ElementName=IntervalSlider, StringFormat={}{0:0} мин}" />
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Grid>
                         </Grid>
 
@@ -107,8 +106,8 @@
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Длительность перерыва" Style="{StaticResource BodyText}" />
-                                <TextBlock Text="20 секунд достаточно, чтобы глаза расслабились"
+                                <TextBlock Text="{DynamicResource Settings_BreakDuration_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_BreakDuration_Desc}"
                                            Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                             </StackPanel>
                             <Grid Grid.Column="1" VerticalAlignment="Center">
@@ -119,10 +118,9 @@
                                 <Slider x:Name="BreakSlider" Style="{StaticResource FluentSlider}"
                                         Minimum="5" Maximum="300" TickFrequency="5" IsSnapToTickEnabled="True"
                                         ValueChanged="OnSettingChanged" />
-                                <TextBlock Grid.Column="1" Style="{StaticResource BodyText}"
+                                <TextBlock x:Name="BreakValueText" Grid.Column="1" Style="{StaticResource BodyText}"
                                            HorizontalAlignment="Right" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Text="{Binding Value, ElementName=BreakSlider, StringFormat={}{0:0} с}" />
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Grid>
                         </Grid>
 
@@ -134,8 +132,8 @@
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Кнопка «Отложить»" Style="{StaticResource BodyText}" />
-                                <TextBlock Text="На сколько сдвигается перерыв одним нажатием"
+                                <TextBlock Text="{DynamicResource Settings_Postpone_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_Postpone_Desc}"
                                            Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                             </StackPanel>
                             <Grid Grid.Column="1" VerticalAlignment="Center">
@@ -146,17 +144,16 @@
                                 <Slider x:Name="PostponeSlider" Style="{StaticResource FluentSlider}"
                                         Minimum="1" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True"
                                         ValueChanged="OnSettingChanged" />
-                                <TextBlock Grid.Column="1" Style="{StaticResource BodyText}"
+                                <TextBlock x:Name="PostponeValueText" Grid.Column="1" Style="{StaticResource BodyText}"
                                            HorizontalAlignment="Right" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Text="{Binding Value, ElementName=PostponeSlider, StringFormat={}{0:0} мин}" />
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Grid>
                         </Grid>
                     </StackPanel>
                 </Border>
 
                 <!-- ───────── Уведомления ───────── -->
-                <TextBlock Text="Уведомления" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
+                <TextBlock Text="{DynamicResource Settings_Section_Notifications}" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <Grid Style="{StaticResource Row}">
@@ -165,15 +162,15 @@
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Как напоминать" Style="{StaticResource BodyText}" />
-                                <TextBlock Text="От незаметного значка до полноэкранной заставки"
+                                <TextBlock Text="{DynamicResource Settings_NotifyStyle_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_NotifyStyle_Desc}"
                                            Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                             </StackPanel>
                             <ComboBox x:Name="StyleCombo" Grid.Column="1" Style="{StaticResource FluentComboBox}"
                                       VerticalAlignment="Center" SelectionChanged="OnSettingChanged">
-                                <ComboBoxItem Content="Только значок в трее" />
-                                <ComboBoxItem Content="Уведомление Windows" />
-                                <ComboBoxItem Content="Полноэкранная заставка" />
+                                <ComboBoxItem Content="{DynamicResource Settings_NotifyStyle_TrayOnly}" />
+                                <ComboBoxItem Content="{DynamicResource Settings_NotifyStyle_Toast}" />
+                                <ComboBoxItem Content="{DynamicResource Settings_NotifyStyle_Overlay}" />
                             </ComboBox>
                         </Grid>
 
@@ -185,7 +182,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Звук в начале перерыва" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_SoundStart}" Style="{StaticResource BodyText}" />
                             </StackPanel>
                             <ToggleButton x:Name="SoundStartToggle" Grid.Column="1"
                                           Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
@@ -198,7 +195,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Звук в конце перерыва" Style="{StaticResource BodyText}"
+                            <TextBlock Text="{DynamicResource Settings_SoundEnd}" Style="{StaticResource BodyText}"
                                        VerticalAlignment="Center" />
                             <ToggleButton x:Name="SoundEndToggle" Grid.Column="1"
                                           Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
@@ -212,8 +209,8 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Разрешить пропускать перерыв" Style="{StaticResource BodyText}" />
-                                <TextBlock Text="Выключите, если хотите себя дисциплинировать"
+                                <TextBlock Text="{DynamicResource Settings_AllowSkip_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_AllowSkip_Desc}"
                                            Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                             </StackPanel>
                             <ToggleButton x:Name="AllowSkipToggle" Grid.Column="1"
@@ -227,7 +224,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Затемнять все мониторы" Style="{StaticResource BodyText}"
+                            <TextBlock Text="{DynamicResource Settings_DimAllScreens}" Style="{StaticResource BodyText}"
                                        VerticalAlignment="Center" />
                             <ToggleButton x:Name="DimAllToggle" Grid.Column="1"
                                           Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
@@ -236,7 +233,7 @@
                 </Border>
 
                 <!-- ───────── Рабочие часы ───────── -->
-                <TextBlock Text="Рабочие часы" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
+                <TextBlock Text="{DynamicResource Settings_Section_WorkingHours}" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <Grid Style="{StaticResource Row}">
@@ -245,8 +242,8 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Напоминать только в рабочее время" Style="{StaticResource BodyText}" />
-                                <TextBlock Text="Вне расписания приложение молчит"
+                                <TextBlock Text="{DynamicResource Settings_WorkHoursOnly_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_WorkHoursOnly_Desc}"
                                            Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                             </StackPanel>
                             <ToggleButton x:Name="WorkHoursToggle" Grid.Column="1"
@@ -261,7 +258,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="С какого по какое" Style="{StaticResource BodyText}"
+                                <TextBlock Text="{DynamicResource Settings_WorkHoursRange_Label}" Style="{StaticResource BodyText}"
                                            VerticalAlignment="Center" />
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                                     <TextBox x:Name="WorkStartBox" Style="{StaticResource FluentTextBox}"
@@ -282,7 +279,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Дни недели" Style="{StaticResource BodyText}"
+                                <TextBlock Text="{DynamicResource Settings_WorkDays_Label}" Style="{StaticResource BodyText}"
                                            VerticalAlignment="Center" />
                                 <StackPanel x:Name="DaysPanel" Grid.Column="1" Orientation="Horizontal" />
                             </Grid>
@@ -291,7 +288,7 @@
                 </Border>
 
                 <!-- ───────── Автопауза ───────── -->
-                <TextBlock Text="Автопауза" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
+                <TextBlock Text="{DynamicResource Settings_Section_AutoPause}" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <Grid Style="{StaticResource Row}">
@@ -300,8 +297,8 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Ставить на паузу при простое" Style="{StaticResource BodyText}" />
-                                <TextBlock Text="Останавливает отсчёт, если вы отошли от компьютера, и продолжает при активности"
+                                <TextBlock Text="{DynamicResource Settings_AutoPause_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_AutoPause_Desc}"
                                            Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                             </StackPanel>
                             <ToggleButton x:Name="AutoPauseToggle" Grid.Column="1"
@@ -317,8 +314,8 @@
                                     <ColumnDefinition Width="240" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Порог простоя" Style="{StaticResource BodyText}" />
-                                    <TextBlock Text="Через сколько минут без мыши и клавиатуры ставить на паузу"
+                                    <TextBlock Text="{DynamicResource Settings_IdleThreshold_Label}" Style="{StaticResource BodyText}" />
+                                    <TextBlock Text="{DynamicResource Settings_IdleThreshold_Desc}"
                                                Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                                 </StackPanel>
                                 <Grid Grid.Column="1" VerticalAlignment="Center">
@@ -329,10 +326,9 @@
                                     <Slider x:Name="IdleThresholdSlider" Style="{StaticResource FluentSlider}"
                                             Minimum="1" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True"
                                             ValueChanged="OnSettingChanged" />
-                                    <TextBlock Grid.Column="1" Style="{StaticResource BodyText}"
+                                    <TextBlock x:Name="IdleThresholdValueText" Grid.Column="1" Style="{StaticResource BodyText}"
                                                HorizontalAlignment="Right" VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Text="{Binding Value, ElementName=IdleThresholdSlider, StringFormat={}{0:0} мин}" />
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Grid>
                             </Grid>
                         </StackPanel>
@@ -340,7 +336,7 @@
                 </Border>
 
                 <!-- ───────── Общее ───────── -->
-                <TextBlock Text="Общее" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
+                <TextBlock Text="{DynamicResource Settings_Section_General}" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <Grid Style="{StaticResource Row}">
@@ -349,8 +345,8 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Запускать при входе в Windows" Style="{StaticResource BodyText}" />
-                                <TextBlock Text="Приложение стартует свёрнутым в трей"
+                                <TextBlock Text="{DynamicResource Settings_Autostart_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_Autostart_Desc}"
                                            Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                             </StackPanel>
                             <ToggleButton x:Name="AutostartToggle" Grid.Column="1"
@@ -364,13 +360,34 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Оформление" Style="{StaticResource BodyText}"
+                            <TextBlock Text="{DynamicResource Settings_Theme_Label}" Style="{StaticResource BodyText}"
                                        VerticalAlignment="Center" />
                             <ComboBox x:Name="ThemeCombo" Grid.Column="1" Style="{StaticResource FluentComboBox}"
                                       VerticalAlignment="Center" SelectionChanged="OnSettingChanged">
-                                <ComboBoxItem Content="Как в системе" />
-                                <ComboBoxItem Content="Светлое" />
-                                <ComboBoxItem Content="Тёмное" />
+                                <ComboBoxItem Content="{DynamicResource Settings_Theme_System}" />
+                                <ComboBoxItem Content="{DynamicResource Settings_Theme_Light}" />
+                                <ComboBoxItem Content="{DynamicResource Settings_Theme_Dark}" />
+                            </ComboBox>
+                        </Grid>
+
+                        <Border Style="{StaticResource RowDivider}" />
+
+                        <Grid Style="{StaticResource Row}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="240" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Settings_Language_Label}" Style="{StaticResource BodyText}"
+                                       VerticalAlignment="Center" />
+                            <ComboBox x:Name="LanguageCombo" Grid.Column="1" Style="{StaticResource FluentComboBox}"
+                                      VerticalAlignment="Center" SelectionChanged="OnSettingChanged">
+                                <ComboBoxItem Content="Системный / System" />
+                                <ComboBoxItem Content="English" />
+                                <ComboBoxItem Content="Русский" />
+                                <ComboBoxItem Content="Español" />
+                                <ComboBoxItem Content="Deutsch" />
+                                <ComboBoxItem Content="Français" />
+                                <ComboBoxItem Content="Português (Brasil)" />
                             </ComboBox>
                         </Grid>
                     </StackPanel>
@@ -383,13 +400,11 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock x:Name="StatsText" Style="{StaticResource CaptionText}"
-                                   Text="Перерывов сегодня: 0" />
-                        <TextBlock Style="{StaticResource CaptionText}" Margin="0,2,0,0"
-                                   Text="TwentyMate 1.1 · настройки хранятся в %APPDATA%\TwentyMate" />
+                        <TextBlock x:Name="StatsText" Style="{StaticResource CaptionText}" />
+                        <TextBlock x:Name="VersionText" Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Button Grid.Column="1" Style="{StaticResource SecondaryButton}"
-                            Content="Сбросить" MinWidth="96" Click="OnReset" />
+                            Content="{DynamicResource Settings_Reset_Button}" MinWidth="96" Click="OnReset" />
                 </Grid>
             </StackPanel>
         </ScrollViewer>

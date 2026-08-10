@@ -39,7 +39,7 @@ public partial class BreakWindow : Window
 
         _scheduler.Ticked += OnTick;
 
-        PostponeButton.Content = $"Отложить на {settings.PostponeMinutes} мин";
+        PostponeButton.Content = LocalizationManager.T("Break_PostponeFormatted", settings.PostponeMinutes);
 
         if (!showControls)
         {
@@ -50,7 +50,7 @@ public partial class BreakWindow : Window
         {
             SkipButton.Visibility = Visibility.Collapsed;
             PostponeButton.Visibility = Visibility.Collapsed;
-            HintText.Text = "Перерыв закончится автоматически";
+            HintText.Text = LocalizationManager.T("Break_AutoEndHint");
         }
 
         UpdateCountdown();

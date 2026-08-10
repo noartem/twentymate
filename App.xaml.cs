@@ -1,7 +1,9 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Markup;
 using TwentyMate.Core;
 using TwentyMate.Views;
 
@@ -18,6 +20,13 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Must run before any FrameworkElement is constructed: it only affects elements created
+        // after this point, and drives spellcheck/hyphenation/font-fallback shaping for the
+        // Cyrillic and accented text the app now ships.
+        FrameworkElement.LanguageProperty.OverrideMetadata(
+            typeof(FrameworkElement),
+            new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentUICulture.IetfLanguageTag)));
+
         _instanceMutex = new Mutex(initiallyOwned: true, MutexName, out var isFirstInstance);
         if (!isFirstInstance)
         {
@@ -38,6 +47,7 @@ public partial class App : Application
 
         Settings = SettingsStore.Load();
         ThemeManager.Initialize(Settings.Theme);
+        LocalizationManager.Initialize(Settings.Language);
 
         _tray = new TrayController(Settings);
         _tray.Start();

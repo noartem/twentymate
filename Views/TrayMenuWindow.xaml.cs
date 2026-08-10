@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
@@ -94,45 +95,46 @@ public partial class TrayMenuWindow : Window
         {
             case SchedulerState.Break:
                 TimeText.Text = remaining;
-                StatusText.Text = "перерыв идёт";
+                StatusText.Text = LocalizationManager.T("Tray_Status_BreakOngoing");
                 RingGlyph.Text = "";
                 Ring.Value = 1 - _scheduler.Progress;
-                BreakNowText.Text = "Пропустить перерыв";
+                BreakNowText.Text = LocalizationManager.T("Tray_BreakNow_Skip");
                 break;
 
             case SchedulerState.Paused:
-                TimeText.Text = _scheduler.PausedUntil is { } until ? $"до {until:HH:mm}" : "На паузе";
-                StatusText.Text = "напоминания отключены";
+                TimeText.Text = _scheduler.PausedUntil is { } until
+                    ? LocalizationManager.T("Tray_Status_PausedUntilTime", until.ToString("HH:mm", CultureInfo.InvariantCulture))
+                    : LocalizationManager.T("Tray_Status_PausedIndefiniteTime");
+                StatusText.Text = LocalizationManager.T("Tray_Status_PausedSubtitle");
                 RingGlyph.Text = "";
                 Ring.Value = 0;
-                BreakNowText.Text = "Перерыв сейчас";
+                BreakNowText.Text = LocalizationManager.T("Tray_BreakNow_Default");
                 break;
 
             case SchedulerState.OffHours:
-                TimeText.Text = "Не сейчас";
-                StatusText.Text = $"рабочие часы {_settings.WorkStart}–{_settings.WorkEnd}";
+                TimeText.Text = LocalizationManager.T("Tray_Status_OffHoursTime");
+                StatusText.Text = LocalizationManager.T("Tray_Status_OffHoursSubtitle", _settings.WorkStart, _settings.WorkEnd);
                 RingGlyph.Text = "";
                 Ring.Value = 0;
-                BreakNowText.Text = "Перерыв сейчас";
+                BreakNowText.Text = LocalizationManager.T("Tray_BreakNow_Default");
                 break;
 
             default:
                 TimeText.Text = remaining;
-                StatusText.Text = "до следующего перерыва";
+                StatusText.Text = LocalizationManager.T("Tray_Status_NextBreak");
                 RingGlyph.Text = "";
                 Ring.Value = _scheduler.Progress;
-                BreakNowText.Text = "Перерыв сейчас";
+                BreakNowText.Text = LocalizationManager.T("Tray_BreakNow_Default");
                 break;
         }
 
         var paused = _scheduler.State is SchedulerState.Paused;
-        PauseText.Text = paused ? "Продолжить" : "Пауза";
+        PauseText.Text = paused ? LocalizationManager.T("Action_Resume") : LocalizationManager.T("Action_Pause");
         PauseGlyph.Text = paused ? "" : "";
         PausePresets.Visibility = paused ? Visibility.Collapsed : Visibility.Visible;
 
-        StatsText.Text = _settings.LastBreakDay == DateTime.Today.ToString("yyyy-MM-dd")
-            ? $"Сегодня перерывов: {_settings.BreaksToday}   ·   всего: {_settings.BreaksTotal}"
-            : $"Сегодня перерывов: 0   ·   всего: {_settings.BreaksTotal}";
+        var breaksToday = _settings.LastBreakDay == DateTime.Today.ToString("yyyy-MM-dd") ? _settings.BreaksToday : 0;
+        StatsText.Text = LocalizationManager.T("Tray_Stats_Format", breaksToday, _settings.BreaksTotal);
     }
 
     private void OnBreakNow(object sender, RoutedEventArgs e)

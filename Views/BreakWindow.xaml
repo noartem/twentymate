@@ -64,7 +64,7 @@
                                FontWeight="SemiBold"
                                Foreground="#FFFFFFFF"
                                HorizontalAlignment="Center" />
-                    <TextBlock Text="секунд"
+                    <TextBlock Text="{DynamicResource Break_SecondsLabel}"
                                FontFamily="Segoe UI Variable Text, Segoe UI"
                                FontSize="14"
                                Foreground="#8CFFFFFF"
@@ -73,7 +73,7 @@
                 </StackPanel>
             </Grid>
 
-            <TextBlock Text="Отдых для глаз"
+            <TextBlock Text="{DynamicResource Break_Heading}"
                        FontFamily="Segoe UI Variable Display, Segoe UI"
                        FontSize="34"
                        FontWeight="SemiBold"
@@ -81,7 +81,7 @@
                        HorizontalAlignment="Center"
                        Margin="0,36,0,0" />
 
-            <TextBlock Text="Посмотрите на объект метрах в шести — и просто моргайте"
+            <TextBlock Text="{DynamicResource Break_Instruction}"
                        FontFamily="Segoe UI Variable Text, Segoe UI"
                        FontSize="16"
                        Foreground="#A8FFFFFF"
@@ -96,7 +96,7 @@
                         Margin="0,36,0,0">
                 <Button x:Name="PostponeButton"
                         Style="{StaticResource SecondaryButton}"
-                        Content="Отложить"
+                        Content="{DynamicResource Break_Postpone}"
                         MinWidth="132"
                         Margin="0,0,12,0"
                         Background="#1AFFFFFF"
@@ -105,13 +105,13 @@
                         Click="OnPostpone" />
                 <Button x:Name="SkipButton"
                         Style="{StaticResource AccentButton}"
-                        Content="Пропустить"
+                        Content="{DynamicResource Break_Skip}"
                         MinWidth="132"
                         Click="OnSkip" />
             </StackPanel>
 
             <TextBlock x:Name="HintText"
-                       Text="Esc — пропустить перерыв"
+                       Text="{DynamicResource Break_Hint}"
                        FontFamily="Segoe UI Variable Text, Segoe UI"
                        FontSize="12"
                        Foreground="#66FFFFFF"

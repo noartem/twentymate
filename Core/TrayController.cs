@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Windows;
 using TwentyMate.Views;
 using Forms = System.Windows.Forms;
@@ -42,6 +43,7 @@ public sealed class TrayController : IDisposable
         _scheduler.BreakFinished += (_, completed) => OnBreakFinished(completed);
 
         ThemeManager.Changed += (_, _) => RefreshIcon();
+        LocalizationManager.Changed += (_, _) => RefreshIcon();
     }
 
     public BreakScheduler Scheduler => _scheduler;
@@ -65,6 +67,7 @@ public sealed class TrayController : IDisposable
         _scheduler.ApplySettings(_settings);
         StartupManager.TrySet(_settings.LaunchAtLogin);
         ThemeManager.Apply(_settings.Theme);
+        LocalizationManager.Apply(_settings.Language);
         SettingsStore.Save(_settings);
         RefreshIcon();
     }
@@ -81,13 +84,13 @@ public sealed class TrayController : IDisposable
     {
         var text = _scheduler.State switch
         {
-            SchedulerState.Break => $"Перерыв — {FormatClock(_scheduler.Remaining)}",
-            SchedulerState.Paused when _scheduler.IsPausedByIdle => "Пауза — нет активности",
+            SchedulerState.Break => LocalizationManager.T("Tray_Tooltip_Break", FormatClock(_scheduler.Remaining)),
+            SchedulerState.Paused when _scheduler.IsPausedByIdle => LocalizationManager.T("Status_PausedByIdle"),
             SchedulerState.Paused when _scheduler.PausedUntil is { } until =>
-                $"Пауза до {until:HH:mm}",
-            SchedulerState.Paused => "Пауза",
-            SchedulerState.OffHours => "Вне рабочих часов",
-            _ => $"Следующий перерыв через {FormatClock(_scheduler.Remaining)}",
+                LocalizationManager.T("Status_PausedUntil", until.ToString("HH:mm", CultureInfo.InvariantCulture)),
+            SchedulerState.Paused => LocalizationManager.T("Status_Paused"),
+            SchedulerState.OffHours => LocalizationManager.T("Status_OffHours"),
+            _ => LocalizationManager.T("Tray_Tooltip_NextBreak", FormatClock(_scheduler.Remaining)),
         };
 
         // Windows truncates the tray icon tooltip at 127 characters.
@@ -113,8 +116,8 @@ public sealed class TrayController : IDisposable
             case NotificationStyle.SystemToast:
                 _notifyIcon.ShowBalloonTip(
                     5000,
-                    "Время для глаз",
-                    $"Посмотрите вдаль {_settings.BreakSeconds} секунд — на объект метрах в шести.",
+                    LocalizationManager.T("Tray_Balloon_Title"),
+                    LocalizationManager.T("Tray_Balloon_Body", _settings.BreakSeconds),
                     Forms.ToolTipIcon.None);
                 break;
 

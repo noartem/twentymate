@@ -24,6 +24,21 @@ public enum AppTheme
     Dark = 2,
 }
 
+/// <summary>
+/// Serialized as a plain int (no <see cref="JsonConverter"/> is registered): member order
+/// is the on-disk settings.json contract and must only ever be appended to, never reordered.
+/// </summary>
+public enum AppLanguage
+{
+    System = 0,
+    English = 1,
+    Russian = 2,
+    Spanish = 3,
+    German = 4,
+    French = 5,
+    PortugueseBr = 6,
+}
+
 public sealed class AppSettings
 {
     // --- Schedule ---
@@ -53,6 +68,7 @@ public sealed class AppSettings
     // --- General ---
     public bool LaunchAtLogin { get; set; }
     public AppTheme Theme { get; set; } = AppTheme.System;
+    public AppLanguage Language { get; set; } = AppLanguage.System;
     public bool FirstRunDone { get; set; }
 
     // --- Statistics ---
@@ -83,6 +99,7 @@ public sealed class AppSettings
 
         if (!Enum.IsDefined(Style)) Style = NotificationStyle.Overlay;
         if (!Enum.IsDefined(Theme)) Theme = AppTheme.System;
+        if (!Enum.IsDefined(Language)) Language = AppLanguage.System;
     }
 
     /// <summary>Whether the moment falls within working hours (always true when the schedule is disabled).</summary>

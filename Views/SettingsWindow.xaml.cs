@@ -1,4 +1,6 @@
 using System;
+using System.Globalization;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -9,11 +11,8 @@ namespace TwentyMate.Views;
 
 public partial class SettingsWindow : Window
 {
-    /// <summary>Day labels in the familiar Monday-first order, with their <see cref="DayOfWeek"/> indices.</summary>
-    private static readonly (string Label, int Index)[] Days =
-    [
-        ("Пн", 1), ("Вт", 2), ("Ср", 3), ("Чт", 4), ("Пт", 5), ("Сб", 6), ("Вс", 0),
-    ];
+    /// <summary>Monday-first display order, holding <see cref="DayOfWeek"/> indices (0 = Sunday).</summary>
+    private static readonly int[] DayOrder = [1, 2, 3, 4, 5, 6, 0];
 
     private readonly AppSettings _settings;
     private readonly TrayController _controller;
@@ -34,9 +33,11 @@ public partial class SettingsWindow : Window
 
         BuildDayChips();
         LoadFromSettings();
+        UpdateFooterVersion();
 
         _controller.Scheduler.Ticked += OnTick;
         ThemeManager.Changed += OnThemeChanged;
+        LocalizationManager.Changed += OnLanguageChanged;
 
         WindowEffects.Apply(this, BackdropType.Mica, ThemeManager.IsDark);
         UpdateStatus();
@@ -46,11 +47,10 @@ public partial class SettingsWindow : Window
 
     private void BuildDayChips()
     {
-        foreach (var (label, index) in Days)
+        foreach (var index in DayOrder)
         {
             var chip = new ToggleButton
             {
-                Content = label,
                 Style = (Style)FindResource("DayChip"),
                 Tag = index,
             };
@@ -59,6 +59,15 @@ public partial class SettingsWindow : Window
             _dayChips[index] = chip;
             DaysPanel.Children.Add(chip);
         }
+
+        UpdateDayChipLabels();
+    }
+
+    /// <summary>Relabels the existing chip instances instead of rebuilding them, so click handlers and checked state survive a language switch.</summary>
+    private void UpdateDayChipLabels()
+    {
+        var dayNames = LocalizationManager.Culture.DateTimeFormat.AbbreviatedDayNames;
+        foreach (var index in DayOrder) _dayChips[index].Content = dayNames[index];
     }
 
     private void LoadFromSettings()
@@ -85,10 +94,12 @@ public partial class SettingsWindow : Window
 
         AutostartToggle.IsChecked = _settings.LaunchAtLogin || StartupManager.IsEnabled;
         ThemeCombo.SelectedIndex = (int)_settings.Theme;
+        LanguageCombo.SelectedIndex = (int)_settings.Language;
 
         _loading = false;
         UpdateWorkHoursAvailability();
         UpdateAutoPauseAvailability();
+        UpdateUnitLabels();
         UpdateStats();
     }
 
@@ -109,7 +120,7 @@ public partial class SettingsWindow : Window
     }
 
     private static string NormalizeTime(string input, string fallback) =>
-        TimeSpan.TryParse(input.Trim().Replace('.', ':'), out var time) && time < TimeSpan.FromDays(1)
+        TimeSpan.TryParse(input.Trim().Replace('.', ':'), CultureInfo.InvariantCulture, out var time) && time < TimeSpan.FromDays(1)
             ? $"{time.Hours:00}:{time.Minutes:00}"
             : fallback;
 
@@ -137,13 +148,31 @@ public partial class SettingsWindow : Window
 
         _settings.LaunchAtLogin = AutostartToggle.IsChecked is true;
         _settings.Theme = (AppTheme)Math.Max(0, ThemeCombo.SelectedIndex);
+        _settings.Language = (AppLanguage)Math.Max(0, LanguageCombo.SelectedIndex);
 
         _settings.Normalize();
         _controller.ApplySettings();
 
         UpdateWorkHoursAvailability();
         UpdateAutoPauseAvailability();
+        UpdateUnitLabels();
         UpdateStatus();
+    }
+
+    /// <summary>Refreshes the 4 slider value labels — Binding.StringFormat can't hold a DynamicResource, so these are set from code.</summary>
+    private void UpdateUnitLabels()
+    {
+        IntervalValueText.Text = LocalizationManager.T("Unit_Minutes_ValueFormat", (int)IntervalSlider.Value);
+        BreakValueText.Text = LocalizationManager.T("Unit_Seconds_ValueFormat", (int)BreakSlider.Value);
+        PostponeValueText.Text = LocalizationManager.T("Unit_Minutes_ValueFormat", (int)PostponeSlider.Value);
+        IdleThresholdValueText.Text = LocalizationManager.T("Unit_Minutes_ValueFormat", (int)IdleThresholdSlider.Value);
+    }
+
+    private void UpdateFooterVersion()
+    {
+        var version = Assembly.GetExecutingAssembly().GetName().Version;
+        var versionText = version is null ? "" : $"{version.Major}.{version.Minor}.{version.Build}";
+        VersionText.Text = LocalizationManager.T("Settings_Footer_Version", versionText);
     }
 
     private void UpdateWorkHoursAvailability()
@@ -172,35 +201,37 @@ public partial class SettingsWindow : Window
         switch (scheduler.State)
         {
             case SchedulerState.Break:
-                StatusTitle.Text = $"Перерыв: {remaining}";
-                StatusSubtitle.Text = "Смотрите вдаль и моргайте";
+                StatusTitle.Text = LocalizationManager.T("Settings_Status_BreakRemaining", remaining);
+                StatusSubtitle.Text = LocalizationManager.T("Settings_Status_BreakSubtitle");
                 StatusRing.Value = 1 - scheduler.Progress;
                 break;
 
             case SchedulerState.Paused:
                 StatusTitle.Text = scheduler.IsPausedByIdle
-                    ? "Пауза — нет активности"
+                    ? LocalizationManager.T("Status_PausedByIdle")
                     : scheduler.PausedUntil is { } until
-                        ? $"Пауза до {until:HH:mm}"
-                        : "Напоминания на паузе";
-                StatusSubtitle.Text = "Нажмите «Продолжить», когда вернётесь";
+                        ? LocalizationManager.T("Status_PausedUntil", until.ToString("HH:mm", CultureInfo.InvariantCulture))
+                        : LocalizationManager.T("Settings_Status_PausedIndefinite");
+                StatusSubtitle.Text = LocalizationManager.T("Settings_Status_PausedSubtitle");
                 StatusRing.Value = 0;
                 break;
 
             case SchedulerState.OffHours:
-                StatusTitle.Text = "Вне рабочих часов";
-                StatusSubtitle.Text = $"Расписание: {_settings.WorkStart}–{_settings.WorkEnd}";
+                StatusTitle.Text = LocalizationManager.T("Status_OffHours");
+                StatusSubtitle.Text = LocalizationManager.T("Settings_Status_OffHoursSubtitle", _settings.WorkStart, _settings.WorkEnd);
                 StatusRing.Value = 0;
                 break;
 
             default:
-                StatusTitle.Text = $"Перерыв через {remaining}";
-                StatusSubtitle.Text = "Правило 20-20-20 бережёт глаза";
+                StatusTitle.Text = LocalizationManager.T("Settings_Status_NextBreak", remaining);
+                StatusSubtitle.Text = LocalizationManager.T("Settings_Status_NextBreakSubtitle");
                 StatusRing.Value = scheduler.Progress;
                 break;
         }
 
-        PauseButton.Content = scheduler.State is SchedulerState.Paused ? "Продолжить" : "Пауза";
+        PauseButton.Content = scheduler.State is SchedulerState.Paused
+            ? LocalizationManager.T("Action_Resume")
+            : LocalizationManager.T("Action_Pause");
     }
 
     private void UpdateStats()
@@ -209,7 +240,7 @@ public partial class SettingsWindow : Window
             ? _settings.BreaksToday
             : 0;
 
-        StatsText.Text = $"Перерывов сегодня: {today} · всего: {_settings.BreaksTotal}";
+        StatsText.Text = LocalizationManager.T("Settings_Stats_Format", today, _settings.BreaksTotal);
     }
 
     // ═══════════════ Buttons ═══════════════
@@ -225,7 +256,7 @@ public partial class SettingsWindow : Window
     private void OnReset(object sender, RoutedEventArgs e)
     {
         var answer = MessageBox.Show(this,
-            "Вернуть все настройки к значениям по умолчанию?",
+            LocalizationManager.T("Settings_Reset_ConfirmBody"),
             "TwentyMate",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
@@ -265,6 +296,7 @@ public partial class SettingsWindow : Window
         target.IdleThresholdMinutes = source.IdleThresholdMinutes;
         target.LaunchAtLogin = source.LaunchAtLogin;
         target.Theme = source.Theme;
+        target.Language = source.Language;
     }
 
     // ═══════════════ Window styling ═══════════════
@@ -275,10 +307,20 @@ public partial class SettingsWindow : Window
         if (handle != IntPtr.Zero) WindowEffects.SetDarkMode(handle, ThemeManager.IsDark);
     }
 
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        UpdateDayChipLabels();
+        UpdateUnitLabels();
+        UpdateFooterVersion();
+        UpdateStatus();
+        UpdateStats();
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         _controller.Scheduler.Ticked -= OnTick;
         ThemeManager.Changed -= OnThemeChanged;
+        LocalizationManager.Changed -= OnLanguageChanged;
         base.OnClosed(e);
     }
 }

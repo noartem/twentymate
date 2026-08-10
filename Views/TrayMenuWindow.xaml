@@ -52,7 +52,7 @@
                                Text="20:00"
                                Style="{StaticResource TitleText}" />
                     <TextBlock x:Name="StatusText"
-                               Text="до перерыва"
+                               Text="{DynamicResource Tray_Status_NextBreak}"
                                Style="{StaticResource CaptionText}"
                                Margin="0,2,0,0" />
                 </StackPanel>
@@ -68,7 +68,7 @@
                         <TextBlock Text="&#xE7B3;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="15" VerticalAlignment="Center" Width="24"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
-                        <TextBlock x:Name="BreakNowText" Text="Перерыв сейчас" VerticalAlignment="Center" />
+                        <TextBlock x:Name="BreakNowText" Text="{DynamicResource Tray_BreakNow_Default}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
 
@@ -79,19 +79,19 @@
                                    FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="15" VerticalAlignment="Center" Width="24"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
-                        <TextBlock x:Name="PauseText" Text="Пауза" VerticalAlignment="Center" />
+                        <TextBlock x:Name="PauseText" Text="{DynamicResource Action_Pause}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
 
                 <!-- Быстрые интервалы паузы: четыре кнопки поровну на всю ширину меню -->
                 <UniformGrid x:Name="PausePresets" Rows="1" Columns="4" Margin="0,2,0,4">
-                    <Button Style="{StaticResource SecondaryButton}" Content="30 мин" MinHeight="28"
+                    <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Tray_Preset_30Min}" MinHeight="28"
                             Padding="0" Margin="0,0,4,0" FontSize="12" Tag="30" Click="OnPausePreset" />
-                    <Button Style="{StaticResource SecondaryButton}" Content="1 ч" MinHeight="28"
+                    <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Tray_Preset_1Hour}" MinHeight="28"
                             Padding="0" Margin="0,0,4,0" FontSize="12" Tag="60" Click="OnPausePreset" />
-                    <Button Style="{StaticResource SecondaryButton}" Content="2 ч" MinHeight="28"
+                    <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Tray_Preset_2Hours}" MinHeight="28"
                             Padding="0" Margin="0,0,4,0" FontSize="12" Tag="120" Click="OnPausePreset" />
-                    <Button Style="{StaticResource SecondaryButton}" Content="Завтра" MinHeight="28"
+                    <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Tray_Preset_Tomorrow}" MinHeight="28"
                             Padding="0" FontSize="12" Tag="tomorrow" Click="OnPausePreset" />
                 </UniformGrid>
             </StackPanel>
@@ -105,7 +105,7 @@
                         <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="15" VerticalAlignment="Center" Width="24"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
-                        <TextBlock Text="Настройки" VerticalAlignment="Center" />
+                        <TextBlock Text="{DynamicResource Tray_Menu_Settings}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
 
@@ -115,15 +115,14 @@
                         <TextBlock Text="&#xE7E8;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="15" VerticalAlignment="Center" Width="24"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
-                        <TextBlock Text="Выход" VerticalAlignment="Center" />
+                        <TextBlock Text="{DynamicResource Tray_Menu_Quit}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </StackPanel>
 
             <TextBlock x:Name="StatsText"
                        Style="{StaticResource CaptionText}"
-                       Margin="20,4,20,10"
-                       Text="Сегодня перерывов: 0" />
+                       Margin="20,4,20,10" />
         </StackPanel>
     </Border>
 </Window>

@@ -27,4 +27,8 @@
     <NoWarn>$(NoWarn);WFAC010</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Languages\*.json" />
+  </ItemGroup>
+
 </Project>
