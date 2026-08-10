@@ -10,8 +10,8 @@ using Forms = System.Windows.Forms;
 namespace TwentyMate.Views;
 
 /// <summary>
-/// Полноэкранное окно перерыва. На дополнительных мониторах показывается
-/// та же заставка, но без кнопок — управление живёт на основном экране.
+/// The fullscreen break window. Additional monitors show the same overlay,
+/// but without buttons — controls live on the primary screen.
 /// </summary>
 public partial class BreakWindow : Window
 {
@@ -66,8 +66,8 @@ public partial class BreakWindow : Window
     {
         base.OnSourceInitialized(e);
 
-        // Позиционируем в физических пикселях: при разном масштабе мониторов
-        // логические координаты WPF промахиваются мимо нужного экрана.
+        // Position in physical pixels: with mixed monitor scaling, WPF's
+        // logical coordinates miss the intended screen.
         if (_targetScreen is { } screen)
         {
             var handle = new WindowInteropHelper(this).Handle;
@@ -109,7 +109,7 @@ public partial class BreakWindow : Window
             ? TrayController.FormatClock(remaining)
             : Math.Ceiling(remaining.TotalSeconds).ToString("0");
 
-        // Кольцо убывает по мере перерыва — визуально «время утекает».
+        // The ring depletes as the break progresses — visually "time draining away".
         Ring.Value = 1 - _scheduler.Progress;
     }
 
@@ -130,7 +130,7 @@ public partial class BreakWindow : Window
         base.OnKeyDown(e);
     }
 
-    /// <summary>Плавно гасит окно и закрывает его. Повторные вызовы безопасны.</summary>
+    /// <summary>Smoothly fades out the window and closes it. Repeated calls are safe.</summary>
     public void CloseOverlay()
     {
         if (_closing) return;

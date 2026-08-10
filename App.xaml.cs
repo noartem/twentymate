@@ -21,15 +21,15 @@ public partial class App : Application
         _instanceMutex = new Mutex(initiallyOwned: true, MutexName, out var isFirstInstance);
         if (!isFirstInstance)
         {
-            // Второй экземпляр не нужен: приложение живёт в трее.
+            // A second instance isn't needed: the app lives in the tray.
             Shutdown();
             return;
         }
 
         base.OnStartup(e);
 
-        // Фоновая утилита не должна умирать из-за сбоя в одном окне: пишем причину
-        // в лог и продолжаем считать время.
+        // A background utility shouldn't die from a failure in one window: log the
+        // cause and keep tracking time.
         DispatcherUnhandledException += (_, args) =>
         {
             LogError(args.Exception);
@@ -42,8 +42,8 @@ public partial class App : Application
         _tray = new TrayController(Settings);
         _tray.Start();
 
-        // При первом запуске сразу показываем настройки, чтобы приложение
-        // не выглядело «ничего не произошло».
+        // On first launch, show settings right away so the app doesn't
+        // look like "nothing happened".
         var startedByAutostart = e.Args.Contains("--minimized");
         if (!Settings.FirstRunDone && !startedByAutostart)
         {
@@ -64,7 +64,7 @@ public partial class App : Application
         }
         catch
         {
-            // Логирование — не повод для второго сбоя.
+            // Logging failing isn't a reason for a second crash.
         }
     }
 

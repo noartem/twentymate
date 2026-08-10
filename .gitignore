@@ -1,14 +1,14 @@
-# Результаты сборки
+# Build output
 bin/
 obj/
 dist/
 
-# Пользовательские файлы Visual Studio / Rider
+# Visual Studio / Rider user files
 *.user
 *.suo
 .vs/
 .idea/
 *.DotSettings.user
 
-# Локальные артефакты
+# Local artifacts
 *.log

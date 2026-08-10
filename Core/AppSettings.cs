@@ -7,13 +7,13 @@ namespace TwentyMate.Core;
 
 public enum NotificationStyle
 {
-    /// <summary>Меняется только значок в трее — самый ненавязчивый режим.</summary>
+    /// <summary>Only the tray icon changes — the least intrusive mode.</summary>
     TrayIconOnly = 0,
 
-    /// <summary>Системное уведомление Windows.</summary>
+    /// <summary>A Windows system notification.</summary>
     SystemToast = 1,
 
-    /// <summary>Полноэкранное окно перерыва с таймером.</summary>
+    /// <summary>A fullscreen break window with a timer.</summary>
     Overlay = 2,
 }
 
@@ -26,36 +26,36 @@ public enum AppTheme
 
 public sealed class AppSettings
 {
-    // --- Расписание ---
+    // --- Schedule ---
     public int IntervalMinutes { get; set; } = 20;
     public int BreakSeconds { get; set; } = 20;
     public int PostponeMinutes { get; set; } = 5;
 
-    // --- Уведомления ---
+    // --- Notifications ---
     public NotificationStyle Style { get; set; } = NotificationStyle.Overlay;
     public bool SoundOnBreakStart { get; set; } = true;
     public bool SoundOnBreakEnd { get; set; } = true;
     public bool AllowSkip { get; set; } = true;
     public bool DimAllScreens { get; set; } = true;
 
-    // --- Рабочие часы ---
+    // --- Working hours ---
     public bool WorkingHoursEnabled { get; set; }
     public string WorkStart { get; set; } = "09:00";
     public string WorkEnd { get; set; } = "18:00";
 
-    /// <summary>Индексы соответствуют <see cref="DayOfWeek"/>: 0 — воскресенье.</summary>
+    /// <summary>Indices correspond to <see cref="DayOfWeek"/>: 0 — Sunday.</summary>
     public bool[] WorkDays { get; set; } = [false, true, true, true, true, true, false];
 
-    // --- Автопауза ---
+    // --- Auto-pause ---
     public bool AutoPauseOnIdle { get; set; }
     public int IdleThresholdMinutes { get; set; } = 5;
 
-    // --- Общее ---
+    // --- General ---
     public bool LaunchAtLogin { get; set; }
     public AppTheme Theme { get; set; } = AppTheme.System;
     public bool FirstRunDone { get; set; }
 
-    // --- Статистика ---
+    // --- Statistics ---
     public int BreaksToday { get; set; }
     public int BreaksTotal { get; set; }
     public string LastBreakDay { get; set; } = "";
@@ -69,10 +69,10 @@ public sealed class AppSettings
     private static TimeSpan ParseTime(string value, TimeSpan fallback) =>
         TimeSpan.TryParse(value, out var parsed) ? parsed : fallback;
 
-    /// <summary>Приводит значения к допустимым диапазонам после загрузки с диска.</summary>
+    /// <summary>Clamps values to their valid ranges after loading from disk.</summary>
     public void Normalize()
     {
-        // Границы совпадают с диапазонами ползунков в окне настроек.
+        // The bounds match the slider ranges in the settings window.
         IntervalMinutes = Math.Clamp(IntervalMinutes, 5, 120);
         BreakSeconds = Math.Clamp(BreakSeconds, 5, 600);
         PostponeMinutes = Math.Clamp(PostponeMinutes, 1, 60);
@@ -85,7 +85,7 @@ public sealed class AppSettings
         if (!Enum.IsDefined(Theme)) Theme = AppTheme.System;
     }
 
-    /// <summary>Попадает ли момент в рабочее время (при выключенном расписании — всегда да).</summary>
+    /// <summary>Whether the moment falls within working hours (always true when the schedule is disabled).</summary>
     public bool IsWithinWorkingHours(DateTime moment)
     {
         if (!WorkingHoursEnabled) return true;
@@ -95,7 +95,7 @@ public sealed class AppSettings
         var start = WorkStartTime;
         var end = WorkEndTime;
 
-        // Интервал через полночь, например 22:00 — 06:00.
+        // An interval spanning midnight, e.g. 22:00 — 06:00.
         return start <= end
             ? time >= start && time < end
             : time >= start || time < end;
@@ -135,7 +135,7 @@ public static class SettingsStore
         }
         catch
         {
-            // Повреждённый файл настроек не должен мешать запуску — откатываемся к значениям по умолчанию.
+            // A corrupted settings file shouldn't block startup — fall back to defaults.
         }
 
         return new AppSettings();
@@ -150,7 +150,7 @@ public static class SettingsStore
         }
         catch
         {
-            // Нет прав на запись — работаем дальше с настройками в памяти.
+            // No write permission — keep working with the in-memory settings.
         }
     }
 }

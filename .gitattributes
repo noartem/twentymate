@@ -1,4 +1,4 @@
-# Проект собирается только под Windows — держим CRLF и в рабочей копии, и в индексе.
+# The project only builds on Windows — keep CRLF in both the working copy and the index.
 * text eol=crlf
 
 *.ico binary

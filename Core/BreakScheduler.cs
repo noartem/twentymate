@@ -5,22 +5,22 @@ namespace TwentyMate.Core;
 
 public enum SchedulerState
 {
-    /// <summary>Идёт работа, тикает таймер до следующего перерыва.</summary>
+    /// <summary>Working, the timer is ticking down to the next break.</summary>
     Working,
 
-    /// <summary>Идёт перерыв.</summary>
+    /// <summary>A break is in progress.</summary>
     Break,
 
-    /// <summary>Пользователь поставил таймер на паузу.</summary>
+    /// <summary>The user has paused the timer.</summary>
     Paused,
 
-    /// <summary>Вне рабочих часов — таймер спит.</summary>
+    /// <summary>Outside working hours — the timer is asleep.</summary>
     OffHours,
 }
 
 /// <summary>
-/// Сердце приложения: отсчитывает время до перерыва, ведёт сам перерыв
-/// и умеет засыпать вне рабочих часов.
+/// The heart of the app: counts down to a break, runs the break itself,
+/// and knows how to sleep outside working hours.
 /// </summary>
 public sealed class BreakScheduler
 {
@@ -44,25 +44,25 @@ public sealed class BreakScheduler
 
     public SchedulerState State { get; private set; } = SchedulerState.Working;
 
-    /// <summary>Сколько осталось до конца текущей фазы.</summary>
+    /// <summary>How much time is left until the end of the current phase.</summary>
     public TimeSpan Remaining { get; private set; }
 
-    /// <summary>Прогресс текущей фазы от 0 до 1.</summary>
+    /// <summary>Progress of the current phase from 0 to 1.</summary>
     public double Progress => _phaseLength > TimeSpan.Zero
         ? Math.Clamp(1 - Remaining.TotalSeconds / _phaseLength.TotalSeconds, 0, 1)
         : 0;
 
-    /// <summary>Когда пауза закончится сама (null — пауза бессрочная).</summary>
+    /// <summary>When the pause will end on its own (null — the pause is indefinite).</summary>
     public DateTime? PausedUntil => _pausedUntil;
 
-    /// <summary>Пауза поставлена автоматически из-за простоя, а не вручную пользователем.</summary>
+    /// <summary>The pause was set automatically due to idleness, not manually by the user.</summary>
     public bool IsPausedByIdle => _pausedByIdle;
 
     public event EventHandler? Ticked;
     public event EventHandler? StateChanged;
     public event EventHandler? BreakStarted;
 
-    /// <summary>Перерыв завершён. Аргумент: true — досижен до конца, false — пропущен.</summary>
+    /// <summary>The break has finished. Argument: true — ran to completion, false — skipped.</summary>
     public event EventHandler<bool>? BreakFinished;
 
     public void Start()
@@ -78,8 +78,8 @@ public sealed class BreakScheduler
         var oldInterval = _settings.IntervalMinutes;
         _settings = settings;
 
-        // Изменение интервала во время работы пересобирает текущий отсчёт,
-        // чтобы новое значение вступало в силу сразу, а не со следующего цикла.
+        // Changing the interval while working rebuilds the current countdown,
+        // so the new value takes effect right away rather than on the next cycle.
         if (State is SchedulerState.Working && oldInterval != settings.IntervalMinutes)
             BeginWorkPhase();
     }
@@ -96,7 +96,7 @@ public sealed class BreakScheduler
         BreakStarted?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Завершить текущий перерыв досрочно.</summary>
+    /// <summary>End the current break early.</summary>
     public void SkipBreak()
     {
         if (State is not SchedulerState.Break) return;
@@ -105,7 +105,7 @@ public sealed class BreakScheduler
         BreakFinished?.Invoke(this, false);
     }
 
-    /// <summary>Отложить перерыв, не начиная его.</summary>
+    /// <summary>Postpone the break without starting it.</summary>
     public void Postpone(TimeSpan by)
     {
         if (State is SchedulerState.Break)
@@ -121,7 +121,7 @@ public sealed class BreakScheduler
         SetState(SchedulerState.Working);
     }
 
-    /// <summary>Пауза до отдельного вызова <see cref="Resume"/> или до указанного момента.</summary>
+    /// <summary>Pause until a separate call to <see cref="Resume"/> or until the given moment.</summary>
     public void Pause(TimeSpan? duration = null)
     {
         _pausedByIdle = false;
@@ -132,7 +132,7 @@ public sealed class BreakScheduler
         SetState(SchedulerState.Paused);
     }
 
-    /// <summary>Пауза до начала следующего дня.</summary>
+    /// <summary>Pause until the start of the next day.</summary>
     public void PauseUntilTomorrow() => Pause(DateTime.Today.AddDays(1) - DateTime.Now);
 
     public void Resume()

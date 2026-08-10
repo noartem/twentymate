@@ -6,8 +6,8 @@ using Microsoft.Win32;
 namespace TwentyMate.Core;
 
 /// <summary>
-/// Держит палитру приложения в согласии с системой: светлая/тёмная тема
-/// и акцентный цвет Windows подхватываются автоматически.
+/// Keeps the app's palette in sync with the system: the light/dark theme
+/// and Windows' accent color are picked up automatically.
 /// </summary>
 public static class ThemeManager
 {
@@ -55,7 +55,7 @@ public static class ThemeManager
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(PersonalizeKey);
-            // 0 — тёмная тема приложений, 1 — светлая.
+            // 0 — dark app theme, 1 — light.
             return key?.GetValue("AppsUseLightTheme") is int light && light == 0;
         }
         catch
@@ -71,7 +71,7 @@ public static class ThemeManager
             using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\DWM");
             if (key?.GetValue("AccentColor") is int raw)
             {
-                // В реестре цвет лежит как AABBGGRR.
+                // In the registry the color is stored as AABBGGRR.
                 var bytes = BitConverter.GetBytes(raw);
                 var color = Color.FromRgb(bytes[0], bytes[1], bytes[2]);
                 return IsDark ? Lighten(color, 0.25) : Darken(color, 0.1);
@@ -79,13 +79,13 @@ public static class ThemeManager
         }
         catch
         {
-            // Не критично — останется цвет по умолчанию.
+            // Not critical — falls back to the default color.
         }
 
         return IsDark ? Color.FromRgb(0x4C, 0xC2, 0xFF) : Color.FromRgb(0x00, 0x5F, 0xB8);
     }
 
-    /// <summary>Обновляет ресурсы приложения, чтобы все окна перекрасились без пересоздания.</summary>
+    /// <summary>Updates the app's resources so every window recolors without being recreated.</summary>
     private static void PushToResources()
     {
         if (Application.Current is not { } app) return;
