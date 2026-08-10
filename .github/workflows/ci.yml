@@ -1,15 +1,18 @@
 # CI/CD: build, format check, and installer for TwentyMate.
 #
-# - On every push/PR: restore → dotnet format --verify-no-changes → build (-warnaserror).
-# - The installer (Installer\build-installer.ps1) is always built afterward
-#   and uploaded as a build artifact — it can be downloaded and checked from
-#   any run, not just a release run.
+# Steps are driven through Taskfile.yml (see AGENTS.md) so local runs (`task
+# check`, `task installer`) and CI stay in sync.
+#
+# - On every push/PR: restore → lint (dotnet format --verify-no-changes) → build (-warnaserror).
+# - The installer (task installer → Installer\build-installer.ps1) is always
+#   built afterward and uploaded as a build artifact — it can be downloaded
+#   and checked from any run, not just a release run.
 # - When a tag like vX.Y.Z is pushed, a GitHub Release is additionally
 #   published with the installer attached; the installer's version is taken
 #   from the tag.
 #
-# There are no tests yet (see TODO.md) — this pipeline doesn't run `dotnet test`.
-# `dotnet format --verify-no-changes` temporarily serves as the lint gate.
+# There are no tests yet (see TODO.md) — this pipeline doesn't run `task test`.
+# `task lint` (dotnet format --verify-no-changes) temporarily serves as the lint gate.
 
 name: CI
 
@@ -37,19 +40,25 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Setup Task
+        uses: arduino/setup-task@v2
+        with:
+          version: "3.x"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Restore
-        run: dotnet restore TwentyMate.csproj
+        run: task restore
 
       # There's no .sln project — we work with the .csproj directly (see README.md).
       # The repo is currently format-clean, so the gate is enabled right away.
       - name: Format check (dotnet format)
-        run: dotnet format TwentyMate.csproj --verify-no-changes --verbosity diagnostic
+        run: task lint
 
       # -warnaserror catches new warnings but doesn't touch anything already
       # suppressed via <NoWarn> in the csproj (e.g. WFAC010) — NoWarn always
       # takes priority over warnaserror.
       - name: Build (Release, warnings as errors)
-        run: dotnet build TwentyMate.csproj -c Release --no-restore -warnaserror
+        run: task build -- -c Release --no-restore -warnaserror
 
   installer:
     name: Build installer
@@ -63,6 +72,12 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+
+      - name: Setup Task
+        uses: arduino/setup-task@v2
+        with:
+          version: "3.x"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Chocolatey comes preinstalled on windows-latest and works without
       # administrator rights or interactive prompts (unlike winget on hosted
@@ -87,9 +102,9 @@ jobs:
           }
           if ($ver) {
             Write-Host "Version from tag: $ver"
-            & Installer\build-installer.ps1 -Version $ver
+            & task installer -- -Version $ver
           } else {
-            & Installer\build-installer.ps1
+            & task installer
           }
 
       - name: Publish artifact

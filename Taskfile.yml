@@ -1,0 +1,64 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  PROJECT: TwentyMate.csproj
+
+tasks:
+  default:
+    desc: List available tasks
+    cmd: task --list
+
+  restore:
+    desc: Restore NuGet dependencies
+    cmds:
+      - dotnet restore {{.PROJECT}}
+
+  build:
+    desc: Build the app (Debug by default; -- -c Release for a release build)
+    cmds:
+      - dotnet build {{.PROJECT}} {{.CLI_ARGS}}
+
+  run:
+    desc: Run the app (Debug)
+    cmds:
+      - dotnet run --project {{.PROJECT}}
+
+  debug:
+    desc: Build Debug with full symbols and launch under the debugger (VS/VS Code can also attach to the running process)
+    cmds:
+      - dotnet build {{.PROJECT}} -c Debug
+      - dotnet exec bin/Debug/net8.0-windows/TwentyMate.dll
+
+  installer:
+    desc: Build the distributable installer (dist/TwentyMate-Setup-<version>.exe)
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File Installer/build-installer.ps1 {{.CLI_ARGS}}
+
+  format:
+    desc: Auto-fix formatting with dotnet format
+    cmds:
+      - dotnet format {{.PROJECT}}
+
+  lint:
+    desc: Check formatting without modifying files (same gate as CI)
+    cmds:
+      - dotnet format {{.PROJECT}} --verify-no-changes --verbosity diagnostic
+
+  test:
+    desc: Run unit tests (no test project yet — see TODO.md)
+    cmds:
+      - dotnet test {{.PROJECT}}
+
+  check:
+    desc: Run the full CI gate locally — restore, lint, and a warnings-as-errors Release build
+    cmds:
+      - task: restore
+      - task: lint
+      - dotnet build {{.PROJECT}} -c Release --no-restore -warnaserror
+
+  clean:
+    desc: Remove build and publish output (bin, obj, dist)
+    cmds:
+      - powershell -Command "Remove-Item -Recurse -Force bin, obj, dist -ErrorAction SilentlyContinue"
