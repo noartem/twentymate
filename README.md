@@ -2,9 +2,11 @@
 
 20-20-20 eye break reminders that live in the system tray.
 
-A native WPF application on .NET 8 with no third-party dependencies. Fluent
-styling — Mica backdrop, rounded corners, system accent color, and automatic
-light/dark theme switching following Windows.
+A native Avalonia application on .NET 10, compiled with NativeAOT — no
+bundled or preinstalled .NET runtime needed, no third-party dependencies
+beyond Avalonia and FluentAvaloniaUI. Fluent styling — Mica backdrop,
+rounded corners, system accent color, and automatic light/dark theme
+switching following Windows.
 
 ## Features
 
@@ -16,6 +18,7 @@ light/dark theme switching following Windows.
 | Working hours | Time range (including spans past midnight) and days of the week |
 | Controls | Break now, skip, snooze, pause for 30 min / 1 h / 2 h / until tomorrow |
 | Sound | Soft chime at the start and end of a break, synthesized on the fly |
+| Localization | English, Russian, Spanish, German, French, Portuguese (Brazil) — follows the system language by default |
 | Other | Auto-start on Windows sign-in, dim all monitors, break counter |
 
 ## Installation
@@ -31,14 +34,13 @@ You can also build the installer yourself, as described below in the
 ## Building the installer for distribution
 
 ```bash
-powershell -ExecutionPolicy Bypass -File Installer\build-installer.ps1
+pwsh -ExecutionPolicy Bypass -File Installer\build-installer.ps1
 ```
 
 Publishes the app to `dist\app` and compiles
-`dist\TwentyMate-Setup-<version>.exe` (~47 MB) — a single file you can put up
-online. The version is taken from `<Version>` in `TwentyMate.csproj`
-(can be overridden with the `-Version` flag); the `-FrameworkDependent` flag
-builds a lightweight variant without .NET bundled in.
+`dist\TwentyMate-Setup-<version>.exe` — a single file you can put up online.
+The version is taken from `<Version>` in `TwentyMate.csproj` (can be
+overridden with the `-Version` flag).
 
 Requires [Inno Setup 6](https://jrsoftware.org/isinfo.php):
 
@@ -57,9 +59,12 @@ download count, EV — instant trust).
 dotnet build -c Release
 ```
 
-The built `TwentyMate.exe` will appear in `bin/Release/net8.0-windows/`.
-Requires the .NET 8 SDK; running a regular build requires the .NET 8 Desktop
-Runtime.
+The built `TwentyMate.exe` will appear in `bin/Release/net10.0-windows/`.
+Requires the .NET 10 SDK. A regular `dotnet build`/`dotnet run` produces a
+framework-dependent binary for fast iteration; only `dotnet publish` (used
+by the installer scripts) triggers the NativeAOT compile, which additionally
+requires the MSVC C++ build tools (Visual Studio Build Tools, "Desktop
+development with C++" workload) to link the native binary.
 
 ## How it's organized
 
@@ -67,14 +72,17 @@ Runtime.
 |---|---|
 | [Core/BreakScheduler.cs](Core/BreakScheduler.cs) | Working, break, pause, and non-working-hours states |
 | [Core/TrayController.cs](Core/TrayController.cs) | Wires up the scheduler, icon, and windows — decides what to show |
-| [Core/TrayIconFactory.cs](Core/TrayIconFactory.cs) | Draws the tray logo tile with GDI+, tracks its color by progress, and caches the result |
+| [Core/TrayIconFactory.cs](Core/TrayIconFactory.cs) | Draws the tray logo tile via Avalonia's own renderer, tracks its color by progress, and caches the result |
+| [Platform/TrayIcon.cs](Platform/TrayIcon.cs) | Shell_NotifyIcon wrapper — the tray icon, tooltip, and balloon notifications |
 | [Assets/generate-icon.py](Assets/generate-icon.py) | Rebuilds `app.ico` from the same geometry and palette as the tray icon |
 | [Core/ThemeManager.cs](Core/ThemeManager.cs) | Palette and accent color, synced with the system |
-| [Core/WindowEffects.cs](Core/WindowEffects.cs) | Mica, rounded corners, and dark border via DWM |
-| [Views/BreakWindow.xaml](Views/BreakWindow.xaml) | Fullscreen break overlay |
-| [Views/TrayMenuWindow.xaml](Views/TrayMenuWindow.xaml) | The tray icon's popup menu |
-| [Views/SettingsWindow.xaml](Views/SettingsWindow.xaml) | Settings window |
+| [Core/WindowEffects.cs](Core/WindowEffects.cs) | Mica and rounded corners via DWM, layered on Avalonia's own transparency support |
+| [Views/BreakWindow.axaml](Views/BreakWindow.axaml) | Fullscreen break overlay |
+| [Views/TrayMenuWindow.axaml](Views/TrayMenuWindow.axaml) | The tray icon's popup menu |
+| [Views/SettingsWindow.axaml](Views/SettingsWindow.axaml) | Settings window |
 | [Installer/TwentyMate.iss](Installer/TwentyMate.iss) | Inno Setup installer wizard script |
-| [Themes/Fluent.xaml](Themes/Fluent.xaml) | Windows 11-style control styles |
+| [Themes/Fluent.axaml](Themes/Fluent.axaml) | Styling not already covered by FluentAvaloniaTheme |
 
-Settings and the error log live in `%APPDATA%\TwentyMate\`.
+Settings live in `%APPDATA%\TwentyMate\settings.json`, usage history (break
+counters, first-run flag) in `%APPDATA%\TwentyMate\stats.json`, and the error
+log in `%APPDATA%\TwentyMate\error.log`.

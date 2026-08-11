@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Media;
+using TwentyMate.Platform;
 
 namespace TwentyMate.Core;
 
@@ -12,25 +12,12 @@ public static class SoundService
 {
     private const int SampleRate = 44100;
 
-    private static readonly Lazy<byte[]> StartTone = new(() => BuildChime([587.33, 880.00], 0.42));
-    private static readonly Lazy<byte[]> EndTone = new(() => BuildChime([880.00, 587.33], 0.36));
+    private static readonly Lazy<IntPtr> StartTone = new(() => Sound.Pin(BuildChime([587.33, 880.00], 0.42)));
+    private static readonly Lazy<IntPtr> EndTone = new(() => Sound.Pin(BuildChime([880.00, 587.33], 0.36)));
 
-    public static void PlayBreakStart() => Play(StartTone.Value);
+    public static void PlayBreakStart() => Sound.Play(StartTone.Value);
 
-    public static void PlayBreakEnd() => Play(EndTone.Value);
-
-    private static void Play(byte[] wav)
-    {
-        try
-        {
-            var player = new SoundPlayer(new MemoryStream(wav));
-            player.Play();
-        }
-        catch
-        {
-            // No audio device — silence isn't a reason to crash.
-        }
-    }
+    public static void PlayBreakEnd() => Sound.Play(EndTone.Value);
 
     /// <summary>A two-note chime with a smooth decay, so it doesn't startle with a sharp beep.</summary>
     private static byte[] BuildChime(double[] notes, double noteSeconds)

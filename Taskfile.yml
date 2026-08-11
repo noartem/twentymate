@@ -29,7 +29,12 @@ tasks:
     desc: Build Debug with full symbols and launch under the debugger (VS/VS Code can also attach to the running process)
     cmds:
       - dotnet build {{.PROJECT}} -c Debug
-      - dotnet exec bin/Debug/net8.0-windows/TwentyMate.dll
+      - dotnet exec bin/Debug/net10.0-windows/TwentyMate.dll
+
+  publish:
+    desc: NativeAOT publish to dist/app (no .NET runtime needed to run the result)
+    cmds:
+      - dotnet publish {{.PROJECT}} -c Release -r win-x64 -o dist/app {{.CLI_ARGS}}
 
   installer:
     desc: Build the distributable installer (dist/TwentyMate-Setup-<version>.exe)

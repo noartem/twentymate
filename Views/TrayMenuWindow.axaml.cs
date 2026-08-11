@@ -1,12 +1,15 @@
 using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media.Animation;
+using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Styling;
+using Avalonia.Threading;
 using TwentyMate.Core;
-using Forms = System.Windows.Forms;
 
 namespace TwentyMate.Views;
 
@@ -22,6 +25,16 @@ public partial class TrayMenuWindow : Window
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
         int x, int y, int cx, int cy, uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out PointInt32 point);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PointInt32
+    {
+        public int X;
+        public int Y;
+    }
 
     private readonly AppSettings _settings;
     private readonly BreakScheduler _scheduler;
@@ -48,39 +61,44 @@ public partial class TrayMenuWindow : Window
         Show();
 
         // Dimensions are only known after Show with SizeToContent.
-        Dispatcher.BeginInvoke(new Action(PositionNearCursor),
-            System.Windows.Threading.DispatcherPriority.Loaded);
+        Dispatcher.UIThread.Post(PositionNearCursor, DispatcherPriority.Loaded);
 
         Activate();
 
-        BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(140))
+        var fade = new Animation
         {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-        });
+            Duration = TimeSpan.FromMilliseconds(140),
+            Easing = new CubicEaseOut(),
+            FillMode = FillMode.Forward,
+            Children =
+            {
+                new KeyFrame { Cue = new Cue(0), Setters = { new Setter(OpacityProperty, 0d) } },
+                new KeyFrame { Cue = new Cue(1), Setters = { new Setter(OpacityProperty, 1d) } },
+            },
+        };
+        _ = fade.RunAsync(this);
     }
 
     private void PositionNearCursor()
     {
-        var handle = new WindowInteropHelper(this).Handle;
-        if (handle == IntPtr.Zero) return;
+        var handle = TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+        if (handle == IntPtr.Zero || !GetCursorPos(out var cursor)) return;
 
-        var cursor = Forms.Cursor.Position;
-        var screen = Forms.Screen.FromPoint(cursor);
+        var screen = Screens.ScreenFromPoint(new PixelPoint(cursor.X, cursor.Y)) ?? Screens.Primary;
+        if (screen is null) return;
+
         var work = screen.WorkingArea;
 
-        // ActualWidth/Height are logical — convert to this monitor's pixels.
-        var source = PresentationSource.FromVisual(this);
-        var scaleX = source?.CompositionTarget?.TransformToDevice.M11 ?? 1;
-        var scaleY = source?.CompositionTarget?.TransformToDevice.M22 ?? 1;
-
-        var width = (int)Math.Ceiling(ActualWidth * scaleX);
-        var height = (int)Math.Ceiling(ActualHeight * scaleY);
+        // Bounds is laid out (post SizeToContent) but in DIPs — convert to this window's
+        // physical pixels before working in screen coordinates.
+        var width = (int)Math.Ceiling(Bounds.Width * DesktopScaling);
+        var height = (int)Math.Ceiling(Bounds.Height * DesktopScaling);
 
         // Snap to whichever corner of the working area the taskbar is on.
-        var x = Math.Clamp(cursor.X - width / 2, work.Left, work.Right - width);
-        var y = cursor.Y > work.Top + work.Height / 2
+        var x = Math.Clamp(cursor.X - width / 2, work.X, work.Right - width);
+        var y = cursor.Y > work.Y + work.Height / 2
             ? work.Bottom - height
-            : work.Top;
+            : work.Y;
 
         SetWindowPos(handle, IntPtr.Zero, x, y, width, height, SwpNoActivate | SwpShowWindow);
     }
@@ -96,7 +114,7 @@ public partial class TrayMenuWindow : Window
             case SchedulerState.Break:
                 TimeText.Text = remaining;
                 StatusText.Text = LocalizationManager.T("Tray_Status_BreakOngoing");
-                RingGlyph.Text = "";
+                RingGlyph.Text = "";
                 Ring.Value = 1 - _scheduler.Progress;
                 BreakNowText.Text = LocalizationManager.T("Tray_BreakNow_Skip");
                 break;
@@ -114,7 +132,7 @@ public partial class TrayMenuWindow : Window
             case SchedulerState.OffHours:
                 TimeText.Text = LocalizationManager.T("Tray_Status_OffHoursTime");
                 StatusText.Text = LocalizationManager.T("Tray_Status_OffHoursSubtitle", _settings.WorkStart, _settings.WorkEnd);
-                RingGlyph.Text = "";
+                RingGlyph.Text = "";
                 Ring.Value = 0;
                 BreakNowText.Text = LocalizationManager.T("Tray_BreakNow_Default");
                 break;
@@ -131,13 +149,14 @@ public partial class TrayMenuWindow : Window
         var paused = _scheduler.State is SchedulerState.Paused;
         PauseText.Text = paused ? LocalizationManager.T("Action_Resume") : LocalizationManager.T("Action_Pause");
         PauseGlyph.Text = paused ? "" : "";
-        PausePresets.Visibility = paused ? Visibility.Collapsed : Visibility.Visible;
+        PausePresets.IsVisible = !paused;
 
-        var breaksToday = _settings.LastBreakDay == DateTime.Today.ToString("yyyy-MM-dd") ? _settings.BreaksToday : 0;
-        StatsText.Text = LocalizationManager.T("Tray_Stats_Format", breaksToday, _settings.BreaksTotal);
+        var stats = _controller.Stats;
+        var breaksToday = stats.LastBreakDay == DateTime.Today.ToString("yyyy-MM-dd") ? stats.BreaksToday : 0;
+        StatsText.Text = LocalizationManager.T("Tray_Stats_Format", breaksToday, stats.BreaksTotal);
     }
 
-    private void OnBreakNow(object sender, RoutedEventArgs e)
+    private void OnBreakNow(object? sender, RoutedEventArgs e)
     {
         if (_scheduler.State is SchedulerState.Break) _scheduler.SkipBreak();
         else _scheduler.StartBreakNow();
@@ -145,15 +164,15 @@ public partial class TrayMenuWindow : Window
         CloseMenu();
     }
 
-    private void OnTogglePause(object sender, RoutedEventArgs e)
+    private void OnTogglePause(object? sender, RoutedEventArgs e)
     {
         _scheduler.TogglePause();
         UpdateState();
     }
 
-    private void OnPausePreset(object sender, RoutedEventArgs e)
+    private void OnPausePreset(object? sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { Tag: string tag }) return;
+        if (sender is not Control { Tag: string tag }) return;
 
         if (tag == "tomorrow") _scheduler.PauseUntilTomorrow();
         else if (int.TryParse(tag, out var minutes)) _scheduler.Pause(TimeSpan.FromMinutes(minutes));
@@ -161,13 +180,13 @@ public partial class TrayMenuWindow : Window
         CloseMenu();
     }
 
-    private void OnSettings(object sender, RoutedEventArgs e)
+    private void OnSettings(object? sender, RoutedEventArgs e)
     {
         CloseMenu();
         _controller.ShowSettings();
     }
 
-    private void OnQuit(object sender, RoutedEventArgs e)
+    private void OnQuit(object? sender, RoutedEventArgs e)
     {
         CloseMenu();
         _controller.Quit();

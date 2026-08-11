@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Windows;
+using System.Linq;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using TwentyMate.Views;
-using Forms = System.Windows.Forms;
+using TrayIcon = TwentyMate.Platform.TrayIcon;
 
 namespace TwentyMate.Core;
 
@@ -14,10 +16,15 @@ namespace TwentyMate.Core;
 public sealed class TrayController : IDisposable
 {
     private readonly AppSettings _settings;
+    private readonly AppStats _stats;
     private readonly BreakScheduler _scheduler;
     private readonly TrayIconFactory _iconFactory = new();
-    private readonly Forms.NotifyIcon _notifyIcon;
+    private readonly TrayIcon _trayIcon = new();
     private readonly List<BreakWindow> _breakWindows = [];
+
+    // Screens.All needs a realized native window to ask, but there otherwise isn't one until
+    // an overlay is shown — this window is never shown, it exists purely to answer that query.
+    private readonly Window _screenProbe = new() { ShowInTaskbar = false, WindowDecorations = WindowDecorations.None };
 
     private SettingsWindow? _settingsWindow;
     private TrayMenuWindow? _menuWindow;
@@ -26,16 +33,11 @@ public sealed class TrayController : IDisposable
     public TrayController(AppSettings settings)
     {
         _settings = settings;
+        _stats = StatsStore.Load();
         _scheduler = new BreakScheduler(settings);
 
-        _notifyIcon = new Forms.NotifyIcon
-        {
-            Visible = true,
-            Text = "TwentyMate",
-        };
-
-        _notifyIcon.MouseUp += OnTrayMouseUp;
-        _notifyIcon.BalloonTipClicked += (_, _) => _scheduler.StartBreakNow();
+        _trayIcon.Clicked += ToggleMenu;
+        _trayIcon.BalloonClicked += () => _scheduler.StartBreakNow();
 
         _scheduler.Ticked += (_, _) => RefreshIcon();
         _scheduler.StateChanged += (_, _) => RefreshIcon();
@@ -47,6 +49,7 @@ public sealed class TrayController : IDisposable
     }
 
     public BreakScheduler Scheduler => _scheduler;
+    public AppStats Stats => _stats;
 
     public void Start()
     {
@@ -76,8 +79,8 @@ public sealed class TrayController : IDisposable
 
     private void RefreshIcon()
     {
-        _notifyIcon.Icon = _iconFactory.Get(_scheduler.State, _scheduler.Progress);
-        _notifyIcon.Text = BuildTooltip();
+        _trayIcon.SetIcon(_iconFactory.Get(_scheduler.State, _scheduler.Progress));
+        _trayIcon.SetTooltip(BuildTooltip());
     }
 
     private string BuildTooltip()
@@ -114,11 +117,9 @@ public sealed class TrayController : IDisposable
         switch (_settings.Style)
         {
             case NotificationStyle.SystemToast:
-                _notifyIcon.ShowBalloonTip(
-                    5000,
+                _trayIcon.ShowBalloon(
                     LocalizationManager.T("Tray_Balloon_Title"),
-                    LocalizationManager.T("Tray_Balloon_Body", _settings.BreakSeconds),
-                    Forms.ToolTipIcon.None);
+                    LocalizationManager.T("Tray_Balloon_Body", _settings.BreakSeconds));
                 break;
 
             case NotificationStyle.Overlay:
@@ -140,28 +141,30 @@ public sealed class TrayController : IDisposable
         if (_settings.SoundOnBreakEnd) SoundService.PlayBreakEnd();
 
         var today = DateTime.Today.ToString("yyyy-MM-dd");
-        if (_settings.LastBreakDay != today)
+        if (_stats.LastBreakDay != today)
         {
-            _settings.LastBreakDay = today;
-            _settings.BreaksToday = 0;
+            _stats.LastBreakDay = today;
+            _stats.BreaksToday = 0;
         }
 
-        _settings.BreaksToday++;
-        _settings.BreaksTotal++;
-        SettingsStore.Save(_settings);
+        _stats.BreaksToday++;
+        _stats.BreaksTotal++;
+        StatsStore.Save(_stats);
     }
 
     private void ShowOverlay()
     {
         CloseOverlay();
 
-        var screens = _settings.DimAllScreens
-            ? Forms.Screen.AllScreens
-            : [Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens[0]];
+        var allScreens = _screenProbe.Screens?.All ?? [];
+        var primary = allScreens.FirstOrDefault(s => s.IsPrimary) ?? allScreens.FirstOrDefault();
+        var screens = _settings.DimAllScreens || primary is null
+            ? allScreens
+            : new[] { primary };
 
         foreach (var screen in screens)
         {
-            var isPrimary = screen.Primary || screens.Length == 1;
+            var isPrimary = screen.IsPrimary || screens.Count == 1;
             var window = new BreakWindow(_settings, _scheduler, showControls: isPrimary);
             _breakWindows.Add(window);
             window.ShowOn(screen);
@@ -175,12 +178,6 @@ public sealed class TrayController : IDisposable
     }
 
     // ═══════════════ Menu and windows ═══════════════
-
-    private void OnTrayMouseUp(object? sender, Forms.MouseEventArgs e)
-    {
-        if (e.Button is Forms.MouseButtons.Left or Forms.MouseButtons.Right)
-            ToggleMenu();
-    }
 
     private void ToggleMenu()
     {
@@ -219,15 +216,16 @@ public sealed class TrayController : IDisposable
     public void Quit()
     {
         SettingsStore.Save(_settings);
-        Application.Current.Shutdown();
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            desktop.Shutdown();
     }
 
     public void Dispose()
     {
         _scheduler.Stop();
         CloseOverlay();
-        _notifyIcon.Visible = false;
-        _notifyIcon.Dispose();
+        _trayIcon.Dispose();
         _iconFactory.Dispose();
+        _screenProbe.Close();
     }
 }

@@ -1,32 +1,29 @@
-<Window x:Class="TwentyMate.Views.TrayMenuWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:TwentyMate.Controls"
+        xmlns:controls="using:TwentyMate.Controls"
+        x:Class="TwentyMate.Views.TrayMenuWindow"
         Title="TwentyMate"
         Width="316"
         SizeToContent="Height"
-        WindowStyle="None"
-        ResizeMode="NoResize"
-        AllowsTransparency="True"
+        WindowDecorations="None"
+        CanResize="False"
+        TransparencyLevelHint="Transparent"
         Background="Transparent"
         ShowInTaskbar="False"
         Topmost="True"
         WindowStartupLocation="Manual"
-        UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Ideal">
+        Opacity="0">
 
     <Border Margin="16"
             Background="{DynamicResource WindowBackgroundBrush}"
             BorderBrush="{DynamicResource StrokeStrongBrush}"
             BorderThickness="1"
-            CornerRadius="8">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="28" ShadowDepth="8" Direction="270" Opacity="0.45" Color="#000000" />
-        </Border.Effect>
+            CornerRadius="8"
+            BoxShadow="0 8 28 0 #75000000">
 
         <StackPanel Margin="0,8">
 
-            <!-- Статус: кольцо, оставшееся время и подпись -->
+            <!-- Status: ring, remaining time, and caption -->
             <Grid Margin="16,8,16,14">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -50,20 +47,19 @@
                 <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="TimeText"
                                Text="20:00"
-                               Style="{StaticResource TitleText}" />
+                               Classes="title-text" />
                     <TextBlock x:Name="StatusText"
                                Text="{DynamicResource Tray_Status_NextBreak}"
-                               Style="{StaticResource CaptionText}"
+                               Classes="caption-text"
                                Margin="0,2,0,0" />
                 </StackPanel>
             </Grid>
 
-            <Border Height="1" Background="{DynamicResource StrokeBrush}" Margin="8,0" />
+            <Border Classes="row-divider" Margin="8,0" />
 
-            <!-- Действия -->
+            <!-- Actions -->
             <StackPanel Margin="8,8,8,0">
-                <Button x:Name="BreakNowButton" Style="{StaticResource SubtleButton}"
-                        HorizontalAlignment="Stretch" Height="36" Click="OnBreakNow">
+                <Button x:Name="BreakNowButton" Classes="subtle" Click="OnBreakNow">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE7B3;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="15" VerticalAlignment="Center" Width="24"
@@ -72,8 +68,7 @@
                     </StackPanel>
                 </Button>
 
-                <Button x:Name="PauseButton" Style="{StaticResource SubtleButton}"
-                        HorizontalAlignment="Stretch" Height="36" Click="OnTogglePause">
+                <Button x:Name="PauseButton" Classes="subtle" Click="OnTogglePause">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock x:Name="PauseGlyph" Text="&#xE769;"
                                    FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
@@ -83,24 +78,19 @@
                     </StackPanel>
                 </Button>
 
-                <!-- Быстрые интервалы паузы: четыре кнопки поровну на всю ширину меню -->
-                <UniformGrid x:Name="PausePresets" Rows="1" Columns="4" Margin="0,2,0,4">
-                    <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Tray_Preset_30Min}" MinHeight="28"
-                            Padding="0" Margin="0,0,4,0" FontSize="12" Tag="30" Click="OnPausePreset" />
-                    <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Tray_Preset_1Hour}" MinHeight="28"
-                            Padding="0" Margin="0,0,4,0" FontSize="12" Tag="60" Click="OnPausePreset" />
-                    <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Tray_Preset_2Hours}" MinHeight="28"
-                            Padding="0" Margin="0,0,4,0" FontSize="12" Tag="120" Click="OnPausePreset" />
-                    <Button Style="{StaticResource SecondaryButton}" Content="{DynamicResource Tray_Preset_Tomorrow}" MinHeight="28"
-                            Padding="0" FontSize="12" Tag="tomorrow" Click="OnPausePreset" />
+                <!-- Quick pause presets: four buttons splitting the menu's width evenly -->
+                <UniformGrid x:Name="PausePresets" Rows="1" Columns="4" Margin="-3,2,-3,4">
+                    <Button Classes="preset" Content="{DynamicResource Tray_Preset_30Min}" Tag="30" Click="OnPausePreset" />
+                    <Button Classes="preset" Content="{DynamicResource Tray_Preset_1Hour}" Tag="60" Click="OnPausePreset" />
+                    <Button Classes="preset" Content="{DynamicResource Tray_Preset_2Hours}" Tag="120" Click="OnPausePreset" />
+                    <Button Classes="preset" Content="{DynamicResource Tray_Preset_Tomorrow}" Tag="tomorrow" Click="OnPausePreset" />
                 </UniformGrid>
             </StackPanel>
 
-            <Border Height="1" Background="{DynamicResource StrokeBrush}" Margin="8,6" />
+            <Border Classes="row-divider" Margin="8,6" />
 
             <StackPanel Margin="8,0,8,4">
-                <Button Style="{StaticResource SubtleButton}" HorizontalAlignment="Stretch"
-                        Height="36" Click="OnSettings">
+                <Button Classes="subtle" Click="OnSettings">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="15" VerticalAlignment="Center" Width="24"
@@ -109,8 +99,7 @@
                     </StackPanel>
                 </Button>
 
-                <Button Style="{StaticResource SubtleButton}" HorizontalAlignment="Stretch"
-                        Height="36" Click="OnQuit">
+                <Button Classes="subtle" Click="OnQuit">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE7E8;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    FontSize="15" VerticalAlignment="Center" Width="24"
@@ -121,7 +110,7 @@
             </StackPanel>
 
             <TextBlock x:Name="StatsText"
-                       Style="{StaticResource CaptionText}"
+                       Classes="caption-text"
                        Margin="20,4,20,10" />
         </StackPanel>
     </Border>

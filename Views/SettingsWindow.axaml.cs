@@ -1,10 +1,11 @@
 using System;
 using System.Globalization;
 using System.Reflection;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Interop;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using FluentAvalonia.UI.Controls;
 using TwentyMate.Core;
 
 namespace TwentyMate.Views;
@@ -49,11 +50,8 @@ public partial class SettingsWindow : Window
     {
         foreach (var index in DayOrder)
         {
-            var chip = new ToggleButton
-            {
-                Style = (Style)FindResource("DayChip"),
-                Tag = index,
-            };
+            var chip = new ToggleButton { Tag = index };
+            chip.Classes.Add("day-chip");
 
             chip.Click += OnSettingChanged;
             _dayChips[index] = chip;
@@ -103,19 +101,19 @@ public partial class SettingsWindow : Window
         UpdateStats();
     }
 
-    private void OnSettingChanged(object sender, RoutedEventArgs e) => SaveToSettings();
+    private void OnSettingChanged(object? sender, RoutedEventArgs e) => SaveToSettings();
 
-    private void OnSettingChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => SaveToSettings();
+    private void OnSliderChanged(object? sender, RangeBaseValueChangedEventArgs e) => SaveToSettings();
 
-    private void OnSettingChanged(object sender, SelectionChangedEventArgs e) => SaveToSettings();
+    private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e) => SaveToSettings();
 
-    private void OnTimeChanged(object sender, RoutedEventArgs e)
+    private void OnTimeChanged(object? sender, RoutedEventArgs e)
     {
         if (_loading) return;
 
         // Silently roll back invalid input to the saved value.
-        WorkStartBox.Text = NormalizeTime(WorkStartBox.Text, _settings.WorkStart);
-        WorkEndBox.Text = NormalizeTime(WorkEndBox.Text, _settings.WorkEnd);
+        WorkStartBox.Text = NormalizeTime(WorkStartBox.Text ?? "", _settings.WorkStart);
+        WorkEndBox.Text = NormalizeTime(WorkEndBox.Text ?? "", _settings.WorkEnd);
         SaveToSettings();
     }
 
@@ -139,8 +137,8 @@ public partial class SettingsWindow : Window
         _settings.DimAllScreens = DimAllToggle.IsChecked is true;
 
         _settings.WorkingHoursEnabled = WorkHoursToggle.IsChecked is true;
-        _settings.WorkStart = NormalizeTime(WorkStartBox.Text, _settings.WorkStart);
-        _settings.WorkEnd = NormalizeTime(WorkEndBox.Text, _settings.WorkEnd);
+        _settings.WorkStart = NormalizeTime(WorkStartBox.Text ?? "", _settings.WorkStart);
+        _settings.WorkEnd = NormalizeTime(WorkEndBox.Text ?? "", _settings.WorkEnd);
         for (var i = 0; i < 7; i++) _settings.WorkDays[i] = _dayChips[i].IsChecked is true;
 
         _settings.AutoPauseOnIdle = AutoPauseToggle.IsChecked is true;
@@ -159,7 +157,7 @@ public partial class SettingsWindow : Window
         UpdateStatus();
     }
 
-    /// <summary>Refreshes the 4 slider value labels — Binding.StringFormat can't hold a DynamicResource, so these are set from code.</summary>
+    /// <summary>Refreshes the 4 slider value labels — a DynamicResource can't be plugged into a string format, so these are set from code.</summary>
     private void UpdateUnitLabels()
     {
         IntervalValueText.Text = LocalizationManager.T("Unit_Minutes_ValueFormat", (int)IntervalSlider.Value);
@@ -236,41 +234,40 @@ public partial class SettingsWindow : Window
 
     private void UpdateStats()
     {
-        var today = _settings.LastBreakDay == DateTime.Today.ToString("yyyy-MM-dd")
-            ? _settings.BreaksToday
+        var stats = _controller.Stats;
+        var today = stats.LastBreakDay == DateTime.Today.ToString("yyyy-MM-dd")
+            ? stats.BreaksToday
             : 0;
 
-        StatsText.Text = LocalizationManager.T("Settings_Stats_Format", today, _settings.BreaksTotal);
+        StatsText.Text = LocalizationManager.T("Settings_Stats_Format", today, stats.BreaksTotal);
     }
 
     // ═══════════════ Buttons ═══════════════
 
-    private void OnBreakNow(object sender, RoutedEventArgs e) => _controller.Scheduler.StartBreakNow();
+    private void OnBreakNow(object? sender, RoutedEventArgs e) => _controller.Scheduler.StartBreakNow();
 
-    private void OnTogglePause(object sender, RoutedEventArgs e)
+    private void OnTogglePause(object? sender, RoutedEventArgs e)
     {
         _controller.Scheduler.TogglePause();
         UpdateStatus();
     }
 
-    private void OnReset(object sender, RoutedEventArgs e)
+    private async void OnReset(object? sender, RoutedEventArgs e)
     {
-        var answer = MessageBox.Show(this,
-            LocalizationManager.T("Settings_Reset_ConfirmBody"),
-            "TwentyMate",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
-        if (answer is not MessageBoxResult.Yes) return;
-
-        var defaults = new AppSettings
+        var dialog = new FAContentDialog
         {
-            // Keep the counters and the first-run flag — that's history, not a setting.
-            FirstRunDone = true,
-            BreaksToday = _settings.BreaksToday,
-            BreaksTotal = _settings.BreaksTotal,
-            LastBreakDay = _settings.LastBreakDay,
+            Title = "TwentyMate",
+            Content = LocalizationManager.T("Settings_Reset_ConfirmBody"),
+            PrimaryButtonText = LocalizationManager.T("Settings_Reset_Button"),
+            CloseButtonText = "Cancel",
+            DefaultButton = FAContentDialogButton.Close,
         };
+
+        if (await dialog.ShowAsync(this) is not FAContentDialogResult.Primary) return;
+
+        // Usage history (AppStats) lives outside AppSettings entirely now, so resetting
+        // settings to defaults no longer needs to carry it forward by hand.
+        var defaults = new AppSettings();
 
         CopyInto(defaults, _settings);
         LoadFromSettings();
@@ -301,9 +298,15 @@ public partial class SettingsWindow : Window
 
     // ═══════════════ Window styling ═══════════════
 
+    /// <summary>The custom title bar replaces the system-drawn one, so it has to opt back into drag-to-move itself.</summary>
+    private void OnTitleBarPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) BeginMoveDrag(e);
+    }
+
     private void OnThemeChanged(object? sender, EventArgs e)
     {
-        var handle = new WindowInteropHelper(this).Handle;
+        var handle = TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
         if (handle != IntPtr.Zero) WindowEffects.SetDarkMode(handle, ThemeManager.IsDark);
     }
 

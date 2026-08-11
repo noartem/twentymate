@@ -1,34 +1,37 @@
-<Window x:Class="TwentyMate.Views.SettingsWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:TwentyMate.Controls"
+        xmlns:controls="using:TwentyMate.Controls"
+        x:Class="TwentyMate.Views.SettingsWindow"
         Title="TwentyMate"
         Width="640" Height="720"
         MinWidth="560" MinHeight="520"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBackgroundBrush}"
-        UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Ideal">
-
-    <Window.Resources>
-        <!-- Строка настройки: слева подпись и пояснение, справа контрол -->
-        <Style x:Key="Row" TargetType="Grid">
-            <Setter Property="Margin" Value="0,10" />
-        </Style>
-        <Style x:Key="RowDivider" TargetType="Border">
-            <Setter Property="Height" Value="1" />
-            <Setter Property="Background" Value="{DynamicResource StrokeBrush}" />
-        </Style>
-    </Window.Resources>
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="36">
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="36" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- ═══════════ Шапка со статусом ═══════════ -->
-        <Border Grid.Row="0" Margin="20,16,20,8" Style="{StaticResource Card}" Padding="18,16">
+        <!-- Custom title bar: same background as the body, so there's no visible seam.
+             PointerPressed re-enables the drag/system-menu behavior a native title bar gives
+             for free; the caption buttons themselves are still drawn by Windows on top. -->
+        <Border Grid.Row="0" Background="{DynamicResource WindowBackgroundBrush}" PointerPressed="OnTitleBarPressed">
+            <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="&#xE7B3;"
+                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                           FontSize="14"
+                           Foreground="{DynamicResource AccentBrush}" />
+                <TextBlock Text="TwentyMate" Classes="caption-text" Margin="8,0,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- ═══════════ Status header ═══════════ -->
+        <Border Grid.Row="1" Margin="20,16,20,8" Classes="card" Padding="18,16">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -50,101 +53,101 @@
 
                 <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
                     <TextBlock x:Name="StatusTitle" Text="{DynamicResource Settings_Status_NextBreak}"
-                               Style="{StaticResource TitleText}"
+                               Classes="title-text"
                                FontSize="19"
                                TextTrimming="CharacterEllipsis" />
                     <TextBlock x:Name="StatusSubtitle" Text="{DynamicResource Settings_Status_NextBreakSubtitle}"
-                               Style="{StaticResource CaptionText}" Margin="0,4,0,0" />
+                               Classes="caption-text" Margin="0,4,0,0" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="PauseButton" Style="{StaticResource SecondaryButton}"
+                    <Button x:Name="PauseButton"
                             Content="{DynamicResource Action_Pause}" MinWidth="96" Margin="0,0,8,0" Click="OnTogglePause" />
-                    <Button Style="{StaticResource AccentButton}"
+                    <Button Classes="accent"
                             Content="{DynamicResource Settings_HeaderCard_BreakNowButton}" MinWidth="96" Click="OnBreakNow" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- ═══════════ Настройки ═══════════ -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20,0,14,20">
+        <!-- ═══════════ Settings ═══════════ -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="20,0,14,20">
             <StackPanel Margin="0,8,6,0">
 
-                <!-- ───────── Расписание ───────── -->
-                <TextBlock Text="{DynamicResource Settings_Section_Schedule}" Style="{StaticResource SectionText}" />
-                <Border Style="{StaticResource Card}">
+                <!-- ───────── Schedule ───────── -->
+                <TextBlock Text="{DynamicResource Settings_Section_Schedule}" Classes="section-text" />
+                <Border Classes="card">
                     <StackPanel>
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Settings_Interval_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_Interval_Label}" Classes="body-text" />
                                 <TextBlock Text="{DynamicResource Settings_Interval_Desc}"
-                                           Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                           Classes="caption-text" Margin="0,2,0,0" />
                             </StackPanel>
                             <Grid Grid.Column="1" VerticalAlignment="Center">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="64" />
                                 </Grid.ColumnDefinitions>
-                                <Slider x:Name="IntervalSlider" Style="{StaticResource FluentSlider}"
+                                <Slider x:Name="IntervalSlider"
                                         Minimum="5" Maximum="120" TickFrequency="1" IsSnapToTickEnabled="True"
-                                        ValueChanged="OnSettingChanged" />
-                                <TextBlock x:Name="IntervalValueText" Grid.Column="1" Style="{StaticResource BodyText}"
+                                        ValueChanged="OnSliderChanged" />
+                                <TextBlock x:Name="IntervalValueText" Grid.Column="1" Classes="body-text"
                                            HorizontalAlignment="Right" VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Grid>
                         </Grid>
 
-                        <Border Style="{StaticResource RowDivider}" />
+                        <Border Classes="row-divider" />
 
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Settings_BreakDuration_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_BreakDuration_Label}" Classes="body-text" />
                                 <TextBlock Text="{DynamicResource Settings_BreakDuration_Desc}"
-                                           Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                           Classes="caption-text" Margin="0,2,0,0" />
                             </StackPanel>
                             <Grid Grid.Column="1" VerticalAlignment="Center">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="64" />
                                 </Grid.ColumnDefinitions>
-                                <Slider x:Name="BreakSlider" Style="{StaticResource FluentSlider}"
+                                <Slider x:Name="BreakSlider"
                                         Minimum="5" Maximum="300" TickFrequency="5" IsSnapToTickEnabled="True"
-                                        ValueChanged="OnSettingChanged" />
-                                <TextBlock x:Name="BreakValueText" Grid.Column="1" Style="{StaticResource BodyText}"
+                                        ValueChanged="OnSliderChanged" />
+                                <TextBlock x:Name="BreakValueText" Grid.Column="1" Classes="body-text"
                                            HorizontalAlignment="Right" VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Grid>
                         </Grid>
 
-                        <Border Style="{StaticResource RowDivider}" />
+                        <Border Classes="row-divider" />
 
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Settings_Postpone_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_Postpone_Label}" Classes="body-text" />
                                 <TextBlock Text="{DynamicResource Settings_Postpone_Desc}"
-                                           Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                           Classes="caption-text" Margin="0,2,0,0" />
                             </StackPanel>
                             <Grid Grid.Column="1" VerticalAlignment="Center">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="64" />
                                 </Grid.ColumnDefinitions>
-                                <Slider x:Name="PostponeSlider" Style="{StaticResource FluentSlider}"
+                                <Slider x:Name="PostponeSlider"
                                         Minimum="1" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True"
-                                        ValueChanged="OnSettingChanged" />
-                                <TextBlock x:Name="PostponeValueText" Grid.Column="1" Style="{StaticResource BodyText}"
+                                        ValueChanged="OnSliderChanged" />
+                                <TextBlock x:Name="PostponeValueText" Grid.Column="1" Classes="body-text"
                                            HorizontalAlignment="Right" VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Grid>
@@ -152,134 +155,129 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ───────── Уведомления ───────── -->
-                <TextBlock Text="{DynamicResource Settings_Section_Notifications}" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
-                <Border Style="{StaticResource Card}">
+                <!-- ───────── Notifications ───────── -->
+                <TextBlock Text="{DynamicResource Settings_Section_Notifications}" Classes="section-text" Margin="2,20,0,8" />
+                <Border Classes="card">
                     <StackPanel>
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Settings_NotifyStyle_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_NotifyStyle_Label}" Classes="body-text" />
                                 <TextBlock Text="{DynamicResource Settings_NotifyStyle_Desc}"
-                                           Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                           Classes="caption-text" Margin="0,2,0,0" />
                             </StackPanel>
-                            <ComboBox x:Name="StyleCombo" Grid.Column="1" Style="{StaticResource FluentComboBox}"
-                                      VerticalAlignment="Center" SelectionChanged="OnSettingChanged">
+                            <ComboBox x:Name="StyleCombo" Grid.Column="1" HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center" SelectionChanged="OnSelectionChanged">
                                 <ComboBoxItem Content="{DynamicResource Settings_NotifyStyle_TrayOnly}" />
                                 <ComboBoxItem Content="{DynamicResource Settings_NotifyStyle_Toast}" />
                                 <ComboBoxItem Content="{DynamicResource Settings_NotifyStyle_Overlay}" />
                             </ComboBox>
                         </Grid>
 
-                        <Border Style="{StaticResource RowDivider}" />
+                        <Border Classes="row-divider" />
 
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Settings_SoundStart}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_SoundStart}" Classes="body-text" />
                             </StackPanel>
-                            <ToggleButton x:Name="SoundStartToggle" Grid.Column="1"
-                                          Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
+                            <ToggleSwitch x:Name="SoundStartToggle" Grid.Column="1" IsCheckedChanged="OnSettingChanged" />
                         </Grid>
 
-                        <Border Style="{StaticResource RowDivider}" />
+                        <Border Classes="row-divider" />
 
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{DynamicResource Settings_SoundEnd}" Style="{StaticResource BodyText}"
+                            <TextBlock Text="{DynamicResource Settings_SoundEnd}" Classes="body-text"
                                        VerticalAlignment="Center" />
-                            <ToggleButton x:Name="SoundEndToggle" Grid.Column="1"
-                                          Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
+                            <ToggleSwitch x:Name="SoundEndToggle" Grid.Column="1" IsCheckedChanged="OnSettingChanged" />
                         </Grid>
 
-                        <Border Style="{StaticResource RowDivider}" />
+                        <Border Classes="row-divider" />
 
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Settings_AllowSkip_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_AllowSkip_Label}" Classes="body-text" />
                                 <TextBlock Text="{DynamicResource Settings_AllowSkip_Desc}"
-                                           Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                           Classes="caption-text" Margin="0,2,0,0" />
                             </StackPanel>
-                            <ToggleButton x:Name="AllowSkipToggle" Grid.Column="1"
-                                          Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
+                            <ToggleSwitch x:Name="AllowSkipToggle" Grid.Column="1" IsCheckedChanged="OnSettingChanged" />
                         </Grid>
 
-                        <Border Style="{StaticResource RowDivider}" />
+                        <Border Classes="row-divider" />
 
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{DynamicResource Settings_DimAllScreens}" Style="{StaticResource BodyText}"
+                            <TextBlock Text="{DynamicResource Settings_DimAllScreens}" Classes="body-text"
                                        VerticalAlignment="Center" />
-                            <ToggleButton x:Name="DimAllToggle" Grid.Column="1"
-                                          Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
+                            <ToggleSwitch x:Name="DimAllToggle" Grid.Column="1" IsCheckedChanged="OnSettingChanged" />
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- ───────── Рабочие часы ───────── -->
-                <TextBlock Text="{DynamicResource Settings_Section_WorkingHours}" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
-                <Border Style="{StaticResource Card}">
+                <!-- ───────── Working hours ───────── -->
+                <TextBlock Text="{DynamicResource Settings_Section_WorkingHours}" Classes="section-text" Margin="2,20,0,8" />
+                <Border Classes="card">
                     <StackPanel>
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Settings_WorkHoursOnly_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_WorkHoursOnly_Label}" Classes="body-text" />
                                 <TextBlock Text="{DynamicResource Settings_WorkHoursOnly_Desc}"
-                                           Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                           Classes="caption-text" Margin="0,2,0,0" />
                             </StackPanel>
-                            <ToggleButton x:Name="WorkHoursToggle" Grid.Column="1"
-                                          Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
+                            <ToggleSwitch x:Name="WorkHoursToggle" Grid.Column="1" IsCheckedChanged="OnSettingChanged" />
                         </Grid>
 
                         <StackPanel x:Name="WorkHoursPanel">
-                            <Border Style="{StaticResource RowDivider}" />
+                            <Border Classes="row-divider" />
 
-                            <Grid Style="{StaticResource Row}">
+                            <Grid Classes="settings-row">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{DynamicResource Settings_WorkHoursRange_Label}" Style="{StaticResource BodyText}"
+                                <TextBlock Text="{DynamicResource Settings_WorkHoursRange_Label}" Classes="body-text"
                                            VerticalAlignment="Center" />
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <TextBox x:Name="WorkStartBox" Style="{StaticResource FluentTextBox}"
+                                    <TextBox x:Name="WorkStartBox"
                                              Width="76" TextAlignment="Center"
                                              MaxLength="5" LostFocus="OnTimeChanged" />
                                     <TextBlock Text="—" VerticalAlignment="Center" Margin="8,0"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox x:Name="WorkEndBox" Style="{StaticResource FluentTextBox}"
+                                    <TextBox x:Name="WorkEndBox"
                                              Width="76" TextAlignment="Center"
                                              MaxLength="5" LostFocus="OnTimeChanged" />
                                 </StackPanel>
                             </Grid>
 
-                            <Border Style="{StaticResource RowDivider}" />
+                            <Border Classes="row-divider" />
 
-                            <Grid Style="{StaticResource Row}">
+                            <Grid Classes="settings-row">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{DynamicResource Settings_WorkDays_Label}" Style="{StaticResource BodyText}"
+                                <TextBlock Text="{DynamicResource Settings_WorkDays_Label}" Classes="body-text"
                                            VerticalAlignment="Center" />
                                 <StackPanel x:Name="DaysPanel" Grid.Column="1" Orientation="Horizontal" />
                             </Grid>
@@ -287,46 +285,45 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ───────── Автопауза ───────── -->
-                <TextBlock Text="{DynamicResource Settings_Section_AutoPause}" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
-                <Border Style="{StaticResource Card}">
+                <!-- ───────── Auto-pause ───────── -->
+                <TextBlock Text="{DynamicResource Settings_Section_AutoPause}" Classes="section-text" Margin="2,20,0,8" />
+                <Border Classes="card">
                     <StackPanel>
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Settings_AutoPause_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_AutoPause_Label}" Classes="body-text" />
                                 <TextBlock Text="{DynamicResource Settings_AutoPause_Desc}"
-                                           Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                           Classes="caption-text" Margin="0,2,0,0" />
                             </StackPanel>
-                            <ToggleButton x:Name="AutoPauseToggle" Grid.Column="1"
-                                          Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
+                            <ToggleSwitch x:Name="AutoPauseToggle" Grid.Column="1" IsCheckedChanged="OnSettingChanged" />
                         </Grid>
 
                         <StackPanel x:Name="AutoPausePanel">
-                            <Border Style="{StaticResource RowDivider}" />
+                            <Border Classes="row-divider" />
 
-                            <Grid Style="{StaticResource Row}">
+                            <Grid Classes="settings-row">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="240" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{DynamicResource Settings_IdleThreshold_Label}" Style="{StaticResource BodyText}" />
+                                    <TextBlock Text="{DynamicResource Settings_IdleThreshold_Label}" Classes="body-text" />
                                     <TextBlock Text="{DynamicResource Settings_IdleThreshold_Desc}"
-                                               Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                               Classes="caption-text" Margin="0,2,0,0" />
                                 </StackPanel>
                                 <Grid Grid.Column="1" VerticalAlignment="Center">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="64" />
                                     </Grid.ColumnDefinitions>
-                                    <Slider x:Name="IdleThresholdSlider" Style="{StaticResource FluentSlider}"
+                                    <Slider x:Name="IdleThresholdSlider"
                                             Minimum="1" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True"
-                                            ValueChanged="OnSettingChanged" />
-                                    <TextBlock x:Name="IdleThresholdValueText" Grid.Column="1" Style="{StaticResource BodyText}"
+                                            ValueChanged="OnSliderChanged" />
+                                    <TextBlock x:Name="IdleThresholdValueText" Grid.Column="1" Classes="body-text"
                                                HorizontalAlignment="Right" VerticalAlignment="Center"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Grid>
@@ -335,52 +332,51 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ───────── Общее ───────── -->
-                <TextBlock Text="{DynamicResource Settings_Section_General}" Style="{StaticResource SectionText}" Margin="2,20,0,8" />
-                <Border Style="{StaticResource Card}">
+                <!-- ───────── General ───────── -->
+                <TextBlock Text="{DynamicResource Settings_Section_General}" Classes="section-text" Margin="2,20,0,8" />
+                <Border Classes="card">
                     <StackPanel>
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{DynamicResource Settings_Autostart_Label}" Style="{StaticResource BodyText}" />
+                                <TextBlock Text="{DynamicResource Settings_Autostart_Label}" Classes="body-text" />
                                 <TextBlock Text="{DynamicResource Settings_Autostart_Desc}"
-                                           Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                           Classes="caption-text" Margin="0,2,0,0" />
                             </StackPanel>
-                            <ToggleButton x:Name="AutostartToggle" Grid.Column="1"
-                                          Style="{StaticResource ToggleSwitch}" Click="OnSettingChanged" />
+                            <ToggleSwitch x:Name="AutostartToggle" Grid.Column="1" IsCheckedChanged="OnSettingChanged" />
                         </Grid>
 
-                        <Border Style="{StaticResource RowDivider}" />
+                        <Border Classes="row-divider" />
 
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{DynamicResource Settings_Theme_Label}" Style="{StaticResource BodyText}"
+                            <TextBlock Text="{DynamicResource Settings_Theme_Label}" Classes="body-text"
                                        VerticalAlignment="Center" />
-                            <ComboBox x:Name="ThemeCombo" Grid.Column="1" Style="{StaticResource FluentComboBox}"
-                                      VerticalAlignment="Center" SelectionChanged="OnSettingChanged">
+                            <ComboBox x:Name="ThemeCombo" Grid.Column="1" HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center" SelectionChanged="OnSelectionChanged">
                                 <ComboBoxItem Content="{DynamicResource Settings_Theme_System}" />
                                 <ComboBoxItem Content="{DynamicResource Settings_Theme_Light}" />
                                 <ComboBoxItem Content="{DynamicResource Settings_Theme_Dark}" />
                             </ComboBox>
                         </Grid>
 
-                        <Border Style="{StaticResource RowDivider}" />
+                        <Border Classes="row-divider" />
 
-                        <Grid Style="{StaticResource Row}">
+                        <Grid Classes="settings-row">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="240" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{DynamicResource Settings_Language_Label}" Style="{StaticResource BodyText}"
+                            <TextBlock Text="{DynamicResource Settings_Language_Label}" Classes="body-text"
                                        VerticalAlignment="Center" />
-                            <ComboBox x:Name="LanguageCombo" Grid.Column="1" Style="{StaticResource FluentComboBox}"
-                                      VerticalAlignment="Center" SelectionChanged="OnSettingChanged">
+                            <ComboBox x:Name="LanguageCombo" Grid.Column="1" HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center" SelectionChanged="OnSelectionChanged">
                                 <ComboBoxItem Content="Системный / System" />
                                 <ComboBoxItem Content="English" />
                                 <ComboBoxItem Content="Русский" />
@@ -393,17 +389,17 @@
                     </StackPanel>
                 </Border>
 
-                <!-- ───────── Подвал ───────── -->
+                <!-- ───────── Footer ───────── -->
                 <Grid Margin="2,18,2,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock x:Name="StatsText" Style="{StaticResource CaptionText}" />
-                        <TextBlock x:Name="VersionText" Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                        <TextBlock x:Name="StatsText" Classes="caption-text" />
+                        <TextBlock x:Name="VersionText" Classes="caption-text" Margin="0,2,0,0" />
                     </StackPanel>
-                    <Button Grid.Column="1" Style="{StaticResource SecondaryButton}"
+                    <Button Grid.Column="1"
                             Content="{DynamicResource Settings_Reset_Button}" MinWidth="96" Click="OnReset" />
                 </Grid>
             </StackPanel>

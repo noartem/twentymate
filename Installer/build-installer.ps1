@@ -6,24 +6,20 @@
     Publishes the app to dist\app and compiles Installer\TwentyMate.iss
     into a single dist\TwentyMate-Setup-<version>.exe.
 
-    By default the build is self-contained: .NET is bundled into the app, so
-    the installer works on any Windows 10 1809+/11 without a preinstalled
-    runtime. Requires Inno Setup 6 (winget install JRSoftware.InnoSetup).
-
-.PARAMETER FrameworkDependent
-    Lightweight build without .NET bundled in (~1 MB installer). Requires
-    the user to have the .NET 8 Desktop Runtime installed.
+    The build is NativeAOT (PublishAot in TwentyMate.csproj): a self-contained
+    native binary with no .NET runtime dependency, so the installer works on
+    any Windows 10 1809+/11 machine as-is. Requires Inno Setup 6
+    (winget install JRSoftware.InnoSetup).
 
 .PARAMETER Version
     Override the version. By default it's taken from <Version> in TwentyMate.csproj.
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File Installer\build-installer.ps1
+    pwsh -ExecutionPolicy Bypass -File Installer\build-installer.ps1
 #>
 
 [CmdletBinding()]
 param(
-    [switch]$FrameworkDependent,
     [string]$Version
 )
 
@@ -44,7 +40,7 @@ if (-not (Test-Path $iss)) { throw "$iss not found" }
 
 $dotnet = (Get-Command dotnet -ErrorAction SilentlyContinue).Source
 if (-not $dotnet) { $dotnet = "C:\Program Files\dotnet\dotnet.exe" }
-if (-not (Test-Path $dotnet)) { throw "dotnet not found. Install the .NET 8 SDK." }
+if (-not (Test-Path $dotnet)) { throw "dotnet not found. Install the .NET 10 SDK." }
 
 $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue).Source
 if (-not $iscc) {
@@ -68,7 +64,7 @@ if (-not $Version) { throw "Couldn't determine the version — pass -Version" }
 
 # ── Publish ───────────────────────────────────────────────────────────────────
 
-Write-Step "Publishing $Version$(if (-not $FrameworkDependent) { ' with .NET bundled in' })"
+Write-Step "Publishing $Version (NativeAOT)"
 
 if (Test-Path $appDir) { Remove-Item $appDir -Recurse -Force }
 
@@ -76,8 +72,6 @@ $publishArgs = @(
     "publish", $project,
     "-c", "Release",
     "-r", "win-x64",
-    "--self-contained", $(if ($FrameworkDependent) { "false" } else { "true" }),
-    "-p:PublishSingleFile=false",
     "-p:DebugType=none",
     "-p:Version=$Version",
     "-o", $appDir
@@ -89,7 +83,11 @@ if ($LASTEXITCODE -ne 0) { throw "Build failed" }
 $builtExe = Join-Path $appDir "TwentyMate.exe"
 if (-not (Test-Path $builtExe)) { throw "$builtExe not found after build" }
 
-$payload = (Get-ChildItem $appDir -Recurse -File | Measure-Object Length -Sum).Sum
+
+# *.pdb (third-party native debug symbols SkiaSharp/HarfBuzzSharp ship regardless of
+# DebugType) are excluded from the installer itself in TwentyMate.iss — exclude them here
+# too, or the reported size would count ~190 MB nothing actually gets shipped.
+$payload = (Get-ChildItem $appDir -Recurse -File -Exclude "*.pdb" | Measure-Object Length -Sum).Sum
 
 # ── Compile the installer ────────────────────────────────────────────────────
 

@@ -69,12 +69,6 @@ public sealed class AppSettings
     public bool LaunchAtLogin { get; set; }
     public AppTheme Theme { get; set; } = AppTheme.System;
     public AppLanguage Language { get; set; } = AppLanguage.System;
-    public bool FirstRunDone { get; set; }
-
-    // --- Statistics ---
-    public int BreaksToday { get; set; }
-    public int BreaksTotal { get; set; }
-    public string LastBreakDay { get; set; } = "";
 
     [JsonIgnore]
     public TimeSpan WorkStartTime => ParseTime(WorkStart, new TimeSpan(9, 0, 0));
@@ -90,8 +84,8 @@ public sealed class AppSettings
     {
         // The bounds match the slider ranges in the settings window.
         IntervalMinutes = Math.Clamp(IntervalMinutes, 5, 120);
-        BreakSeconds = Math.Clamp(BreakSeconds, 5, 600);
-        PostponeMinutes = Math.Clamp(PostponeMinutes, 1, 60);
+        BreakSeconds = Math.Clamp(BreakSeconds, 5, 300);
+        PostponeMinutes = Math.Clamp(PostponeMinutes, 1, 30);
         IdleThresholdMinutes = Math.Clamp(IdleThresholdMinutes, 1, 60);
 
         if (WorkDays is not { Length: 7 })
@@ -118,18 +112,13 @@ public sealed class AppSettings
             : time >= start || time < end;
     }
 
-    public AppSettings Clone() =>
-        JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(this))!;
+    public AppSettings Clone() => JsonSerializer.Deserialize(
+        JsonSerializer.Serialize(this, SettingsJsonContext.Default.AppSettings),
+        SettingsJsonContext.Default.AppSettings)!;
 }
 
 public static class SettingsStore
 {
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    };
-
     public static string Directory { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "TwentyMate");
@@ -142,7 +131,7 @@ public static class SettingsStore
         {
             if (File.Exists(FilePath))
             {
-                var settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath));
+                var settings = JsonSerializer.Deserialize(File.ReadAllText(FilePath), SettingsJsonContext.Default.AppSettings);
                 if (settings is not null)
                 {
                     settings.Normalize();
@@ -163,7 +152,7 @@ public static class SettingsStore
         try
         {
             System.IO.Directory.CreateDirectory(Directory);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(settings, Options));
+            File.WriteAllText(FilePath, JsonSerializer.Serialize(settings, SettingsJsonContext.Default.AppSettings));
         }
         catch
         {

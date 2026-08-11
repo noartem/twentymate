@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
-using System.Windows;
+using Avalonia;
 
 namespace TwentyMate.Core;
 
@@ -173,7 +173,7 @@ public static class LocalizationManager
             using var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream is null) return null;
 
-            return JsonSerializer.Deserialize<Dictionary<string, string>>(stream);
+            return JsonSerializer.Deserialize(stream, SettingsJsonContext.Default.DictionaryStringString);
         }
         catch
         {

@@ -2,16 +2,10 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
-    <!-- Implicit usings are disabled on purpose: WinForms adds System.Drawing and
-         System.Windows.Forms, whose Color/Brush/Application conflict with WPF's types. -->
     <ImplicitUsings>disable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
-    <!-- WinForms pulls System.Drawing and System.Windows.Forms into global usings and
-         conflicts with WPF's types (Application, Color, Brush). Import them explicitly instead. -->
-    <DisableImplicitNamespaceImports_WindowsForms>true</DisableImplicitNamespaceImports_WindowsForms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>TwentyMate</AssemblyName>
     <RootNamespace>TwentyMate</RootNamespace>
     <Version>1.1.1</Version>
@@ -21,11 +15,27 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <!-- WFAC010 wants DPI set via the WinForms API, but all windows here are WPF:
-         PerMonitorV2 is declared in the manifest instead. -->
-    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+
+    <!-- NativeAOT: no .NET Desktop Runtime dependency, no reflection-based JSON/XAML loading. -->
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+
+    <!-- x:Bind-equivalent for Avalonia: bindings resolved at compile time instead of reflection. -->
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- AVLN3001: BreakWindow/SettingsWindow/TrayMenuWindow take required constructor
+         arguments and are always constructed directly in code, never through the runtime
+         XAML type-loader this warning is about — safe to ignore, same as WFAC010 before it. -->
+    <NoWarn>$(NoWarn);AVLN3001</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="FluentAvaloniaUI" Version="3.0.2" />
+  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\Languages\*.json" />

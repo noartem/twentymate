@@ -1,0 +1,142 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════ Base values ═══════════════
+         Button, ToggleSwitch, Slider, ComboBox, TextBox, and ScrollBar all come from
+         FluentAvaloniaTheme (see App.axaml) and need no styling here. What's left is
+         typography, the settings-card surface, and the day-of-week chip, none of which
+         FluentAvalonia has a stock equivalent for. -->
+
+    <Styles.Resources>
+        <FontFamily x:Key="DisplayFont">Segoe UI Variable Display, Segoe UI Variable, Segoe UI</FontFamily>
+        <FontFamily x:Key="TextFont">Segoe UI Variable Text, Segoe UI Variable, Segoe UI</FontFamily>
+        <CornerRadius x:Key="CardRadius">8</CornerRadius>
+        <CornerRadius x:Key="ControlRadius">5</CornerRadius>
+    </Styles.Resources>
+
+    <!-- Bare switch, no "On"/"Off" caption — FluentAvalonia's default ToggleSwitch shows one. -->
+    <Style Selector="ToggleSwitch">
+        <Setter Property="OnContent" Value="{x:Null}" />
+        <Setter Property="OffContent" Value="{x:Null}" />
+    </Style>
+
+    <!-- ═══════════════ Typography ═══════════════ -->
+
+    <Style Selector="TextBlock.display-text">
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="40" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.title-text">
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.section-text">
+        <Setter Property="FontFamily" Value="{StaticResource TextFont}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="Margin" Value="2,0,0,8" />
+    </Style>
+
+    <Style Selector="TextBlock.body-text">
+        <Setter Property="FontFamily" Value="{StaticResource TextFont}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style Selector="TextBlock.caption-text">
+        <Setter Property="FontFamily" Value="{StaticResource TextFont}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!-- ═══════════════ Settings card ═══════════════ -->
+
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource LayerBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource CardRadius}" />
+        <Setter Property="Padding" Value="16,12" />
+    </Style>
+
+    <Style Selector="Border.row-divider">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource StrokeBrush}" />
+    </Style>
+
+    <Style Selector="Grid.settings-row">
+        <Setter Property="Margin" Value="0,10" />
+    </Style>
+
+    <Style Selector="Button.subtle">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="Height" Value="36" />
+    </Style>
+
+    <!-- Small pause-length buttons in the tray menu — FluentAvalonia's default Button padding
+         and corner radius are sized for normal buttons and look oversized/uneven this small. -->
+    <Style Selector="Button.preset">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="3,0" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="CornerRadius" Value="{StaticResource ControlRadius}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- ═══════════════ Day-of-week chip ═══════════════
+         Applied via Classes="day-chip" (set in code — SettingsWindow builds these at runtime),
+         not a keyed resource, so building them needs no runtime resource lookup. -->
+
+    <Style Selector="ToggleButton.day-chip">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="38" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Margin" Value="0,0,6,0" />
+        <Setter Property="FontFamily" Value="{StaticResource TextFont}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Root"
+                        Background="{DynamicResource ControlBrush}"
+                        BorderBrush="{DynamicResource StrokeStrongBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource ControlRadius}">
+                    <TextBlock Name="Label"
+                               Text="{TemplateBinding Content}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="ToggleButton.day-chip:checked /template/ Border#Root">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="ToggleButton.day-chip:checked /template/ TextBlock#Label">
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="ToggleButton.day-chip:pointerover /template/ Border#Root">
+        <Setter Property="Opacity" Value="0.85" />
+    </Style>
+    <Style Selector="ToggleButton.day-chip:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+
+</Styles>

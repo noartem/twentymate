@@ -1,11 +1,15 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media.Animation;
+using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media.Transformation;
+using Avalonia.Platform;
+using Avalonia.Styling;
 using TwentyMate.Core;
-using Forms = System.Windows.Forms;
 
 namespace TwentyMate.Views;
 
@@ -26,7 +30,7 @@ public partial class BreakWindow : Window
     private readonly BreakScheduler _scheduler;
     private readonly bool _showControls;
 
-    private Forms.Screen? _targetScreen;
+    private Screen? _targetScreen;
     private bool _closing;
 
     public BreakWindow(AppSettings settings, BreakScheduler scheduler, bool showControls)
@@ -43,37 +47,41 @@ public partial class BreakWindow : Window
 
         if (!showControls)
         {
-            Actions.Visibility = Visibility.Collapsed;
-            HintText.Visibility = Visibility.Collapsed;
+            Actions.IsVisible = false;
+            HintText.IsVisible = false;
         }
         else if (!settings.AllowSkip)
         {
-            SkipButton.Visibility = Visibility.Collapsed;
-            PostponeButton.Visibility = Visibility.Collapsed;
+            SkipButton.IsVisible = false;
+            PostponeButton.IsVisible = false;
             HintText.Text = LocalizationManager.T("Break_AutoEndHint");
         }
 
         UpdateCountdown();
     }
 
-    public void ShowOn(Forms.Screen screen)
+    public void ShowOn(Screen screen)
     {
         _targetScreen = screen;
         Show();
     }
 
-    protected override void OnSourceInitialized(EventArgs e)
+    protected override void OnOpened(EventArgs e)
     {
-        base.OnSourceInitialized(e);
+        base.OnOpened(e);
 
-        // Position in physical pixels: with mixed monitor scaling, WPF's
-        // logical coordinates miss the intended screen.
+        // Position in physical pixels: with mixed monitor scaling, Avalonia's DIP-based
+        // Width/Height/Position can miss the intended screen — see the same reasoning on
+        // TrayMenuWindow.PositionNearCursor.
         if (_targetScreen is { } screen)
         {
-            var handle = new WindowInteropHelper(this).Handle;
-            var bounds = screen.Bounds;
-            SetWindowPos(handle, IntPtr.Zero, bounds.X, bounds.Y, bounds.Width, bounds.Height,
-                SwpNoActivate | SwpShowWindow);
+            var handle = TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+            if (handle != IntPtr.Zero)
+            {
+                var bounds = screen.Bounds;
+                SetWindowPos(handle, IntPtr.Zero, bounds.X, bounds.Y, bounds.Width, bounds.Height,
+                    SwpNoActivate | SwpShowWindow);
+            }
         }
 
         PlayEntrance();
@@ -82,16 +90,27 @@ public partial class BreakWindow : Window
 
     private void PlayEntrance()
     {
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
         var duration = TimeSpan.FromMilliseconds(320);
+        var easing = new CubicEaseOut();
 
-        BeginAnimation(OpacityProperty,
-            new DoubleAnimation(0, 1, duration) { EasingFunction = ease });
+        var opacity = new Animation
+        {
+            Duration = duration,
+            Easing = easing,
+            FillMode = FillMode.Forward,
+            Children =
+            {
+                new KeyFrame { Cue = new Cue(0), Setters = { new Setter(OpacityProperty, 0d) } },
+                new KeyFrame { Cue = new Cue(1), Setters = { new Setter(OpacityProperty, 1d) } },
+            },
+        };
+        _ = opacity.RunAsync(this);
 
-        ContentScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty,
-            new DoubleAnimation(0.94, 1, duration) { EasingFunction = ease });
-        ContentScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty,
-            new DoubleAnimation(0.94, 1, duration) { EasingFunction = ease });
+        // WPF-style ScaleTransform objects can't be driven by Animation.RunAsync (it requires
+        // a Visual) or by a Transitions entry — only the CSS-like RenderTransform string form
+        // can be transitioned. ContentRoot.axaml declares a TransformOperationsTransition on
+        // RenderTransform, so setting the end value here is enough to animate to it.
+        ContentRoot.RenderTransform = TransformOperations.Parse("scale(1)");
     }
 
     private void OnTick(object? sender, EventArgs e) => UpdateCountdown();
@@ -113,9 +132,9 @@ public partial class BreakWindow : Window
         Ring.Value = 1 - _scheduler.Progress;
     }
 
-    private void OnSkip(object sender, RoutedEventArgs e) => _scheduler.SkipBreak();
+    private void OnSkip(object? sender, RoutedEventArgs e) => _scheduler.SkipBreak();
 
-    private void OnPostpone(object sender, RoutedEventArgs e) =>
+    private void OnPostpone(object? sender, RoutedEventArgs e) =>
         _scheduler.Postpone(TimeSpan.FromMinutes(_settings.PostponeMinutes));
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -131,16 +150,26 @@ public partial class BreakWindow : Window
     }
 
     /// <summary>Smoothly fades out the window and closes it. Repeated calls are safe.</summary>
-    public void CloseOverlay()
+    public async void CloseOverlay()
     {
         if (_closing) return;
         _closing = true;
 
         _scheduler.Ticked -= OnTick;
 
-        var fade = new DoubleAnimation(Opacity, 0, TimeSpan.FromMilliseconds(180));
-        fade.Completed += (_, _) => Close();
-        BeginAnimation(OpacityProperty, fade);
+        var fade = new Animation
+        {
+            Duration = TimeSpan.FromMilliseconds(180),
+            FillMode = FillMode.Forward,
+            Children =
+            {
+                new KeyFrame { Cue = new Cue(0), Setters = { new Setter(OpacityProperty, Opacity) } },
+                new KeyFrame { Cue = new Cue(1), Setters = { new Setter(OpacityProperty, 0d) } },
+            },
+        };
+        await fade.RunAsync(this);
+
+        Close();
     }
 
     protected override void OnClosed(EventArgs e)

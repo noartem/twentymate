@@ -1,19 +1,19 @@
 using System;
-using System.Windows;
-using System.Windows.Media;
-using Microsoft.Win32;
+using Avalonia;
+using Avalonia.Media;
+using Avalonia.Platform;
+using Avalonia.Styling;
+using Avalonia.Threading;
 
 namespace TwentyMate.Core;
 
 /// <summary>
-/// Keeps the app's palette in sync with the system: the light/dark theme
-/// and Windows' accent color are picked up automatically.
+/// Keeps the app's palette in sync with the system: the light/dark theme and Windows' accent
+/// color are picked up automatically through Avalonia's platform settings, replacing manual
+/// reads of the Personalize/DWM registry keys and <c>SystemEvents.UserPreferenceChanged</c>.
 /// </summary>
 public static class ThemeManager
 {
-    private const string PersonalizeKey =
-        @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
-
     private static AppTheme _preference = AppTheme.System;
 
     public static bool IsDark { get; private set; } = true;
@@ -25,11 +25,9 @@ public static class ThemeManager
     public static void Initialize(AppTheme preference)
     {
         _preference = preference;
-        SystemEvents.UserPreferenceChanged += (_, e) =>
-        {
-            if (e.Category is UserPreferenceCategory.General or UserPreferenceCategory.Color)
-                Application.Current?.Dispatcher.BeginInvoke(() => Apply(_preference));
-        };
+
+        if (Application.Current?.PlatformSettings is { } settings)
+            settings.ColorValuesChanged += (_, _) => Dispatcher.UIThread.Post(() => Apply(_preference));
 
         Apply(preference);
     }
@@ -38,52 +36,30 @@ public static class ThemeManager
     {
         _preference = preference;
 
+        var systemColors = Application.Current?.PlatformSettings?.GetColorValues();
+
         IsDark = preference switch
         {
             AppTheme.Light => false,
             AppTheme.Dark => true,
-            _ => IsSystemDark(),
+            _ => systemColors is not { ThemeVariant: PlatformThemeVariant.Light },
         };
 
-        Accent = ReadSystemAccent();
+        Accent = ReadAccent(systemColors);
+
+        // FluentAvaloniaTheme's own controls (ToggleSwitch, Slider, ComboBox...) pick their
+        // light/dark resources from this, independently of the custom brushes pushed below.
+        if (Application.Current is { } app) app.RequestedThemeVariant = IsDark ? ThemeVariant.Dark : ThemeVariant.Light;
+
         PushToResources();
         Changed?.Invoke(null, EventArgs.Empty);
     }
 
-    private static bool IsSystemDark()
+    private static Color ReadAccent(PlatformColorValues? systemColors) => systemColors switch
     {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(PersonalizeKey);
-            // 0 — dark app theme, 1 — light.
-            return key?.GetValue("AppsUseLightTheme") is int light && light == 0;
-        }
-        catch
-        {
-            return true;
-        }
-    }
-
-    private static Color ReadSystemAccent()
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\DWM");
-            if (key?.GetValue("AccentColor") is int raw)
-            {
-                // In the registry the color is stored as AABBGGRR.
-                var bytes = BitConverter.GetBytes(raw);
-                var color = Color.FromRgb(bytes[0], bytes[1], bytes[2]);
-                return IsDark ? Lighten(color, 0.25) : Darken(color, 0.1);
-            }
-        }
-        catch
-        {
-            // Not critical — falls back to the default color.
-        }
-
-        return IsDark ? Color.FromRgb(0x4C, 0xC2, 0xFF) : Color.FromRgb(0x00, 0x5F, 0xB8);
-    }
+        { } colors => IsDark ? Lighten(colors.AccentColor1, 0.25) : Darken(colors.AccentColor1, 0.1),
+        null => IsDark ? Color.FromRgb(0x4C, 0xC2, 0xFF) : Color.FromRgb(0x00, 0x5F, 0xB8),
+    };
 
     /// <summary>Updates the app's resources so every window recolors without being recreated.</summary>
     private static void PushToResources()
@@ -92,12 +68,7 @@ public static class ThemeManager
 
         var resources = app.Resources;
 
-        void Set(string key, Color color)
-        {
-            var brush = new SolidColorBrush(color);
-            brush.Freeze();
-            resources[key] = brush;
-        }
+        void Set(string key, Color color) => resources[key] = new SolidColorBrush(color);
 
         void SetColor(string key, Color color) => resources[key] = color;
 

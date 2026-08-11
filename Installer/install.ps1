@@ -8,10 +8,8 @@
     Autostart is enabled through the app's own settings, so the Run registry
     key is created by the app itself on first launch.
 
-.PARAMETER SelfContained
-    Build with .NET bundled in (~150 MB), so it doesn't depend on an
-    installed runtime. By default the build is lightweight and requires the
-    .NET 8 Desktop Runtime.
+    The build is NativeAOT (PublishAot in TwentyMate.csproj): a self-contained
+    native binary with no .NET runtime dependency.
 
 .PARAMETER NoAutostart
     Don't enable launching at Windows sign-in.
@@ -20,12 +18,11 @@
     Don't launch the app after installation.
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File Installer\install.ps1
+    pwsh -ExecutionPolicy Bypass -File Installer\install.ps1
 #>
 
 [CmdletBinding()]
 param(
-    [switch]$SelfContained,
     [switch]$NoAutostart,
     [switch]$NoLaunch
 )
@@ -44,11 +41,11 @@ if (-not (Test-Path $project)) { throw "$project not found" }
 
 $dotnet = (Get-Command dotnet -ErrorAction SilentlyContinue).Source
 if (-not $dotnet) { $dotnet = "C:\Program Files\dotnet\dotnet.exe" }
-if (-not (Test-Path $dotnet)) { throw "dotnet not found. Install the .NET 8 SDK." }
+if (-not (Test-Path $dotnet)) { throw "dotnet not found. Install the .NET 10 SDK." }
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 
-Write-Step "Building$(if ($SelfContained) { ' with .NET bundled in' })"
+Write-Step "Building (NativeAOT)"
 
 if (Test-Path $publishDir) { Remove-Item $publishDir -Recurse -Force }
 
@@ -56,8 +53,6 @@ $publishArgs = @(
     "publish", $project,
     "-c", "Release",
     "-r", "win-x64",
-    "--self-contained", $(if ($SelfContained) { "true" } else { "false" }),
-    "-p:PublishSingleFile=true",
     "-p:DebugType=none",
     "-o", $publishDir
 )

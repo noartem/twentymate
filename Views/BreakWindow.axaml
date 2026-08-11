@@ -1,21 +1,19 @@
-<Window x:Class="TwentyMate.Views.BreakWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:TwentyMate.Controls"
+        xmlns:controls="using:TwentyMate.Controls"
+        x:Class="TwentyMate.Views.BreakWindow"
         Title="TwentyMate"
-        WindowStyle="None"
-        ResizeMode="NoResize"
-        AllowsTransparency="True"
+        WindowDecorations="None"
+        CanResize="False"
+        TransparencyLevelHint="Transparent"
         Background="Transparent"
         ShowInTaskbar="False"
         Topmost="True"
         WindowStartupLocation="Manual"
-        Opacity="0"
-        UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Ideal">
+        Opacity="0">
 
     <Grid>
-        <!-- Затемняющая подложка: к краям темнее, в центре чуть светлее -->
+        <!-- Dimming backdrop: darker toward the edges, a touch lighter in the center -->
         <Grid.Background>
             <RadialGradientBrush GradientOrigin="0.5,0.45" Center="0.5,0.45" RadiusX="0.85" RadiusY="0.95">
                 <GradientStop Color="#F2141A22" Offset="0" />
@@ -23,7 +21,7 @@
             </RadialGradientBrush>
         </Grid.Background>
 
-        <!-- Мягкое свечение акцентом за кольцом -->
+        <!-- Soft accent glow behind the ring -->
         <Ellipse Width="620" Height="620"
                  HorizontalAlignment="Center" VerticalAlignment="Center"
                  Margin="0,-40,0,0"
@@ -45,12 +43,15 @@
         <StackPanel x:Name="ContentRoot"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    RenderTransformOrigin="0.5,0.5">
-            <StackPanel.RenderTransform>
-                <ScaleTransform x:Name="ContentScale" ScaleX="0.94" ScaleY="0.94" />
-            </StackPanel.RenderTransform>
+                    RenderTransformOrigin="0.5,0.5"
+                    RenderTransform="scale(0.94)">
+            <StackPanel.Transitions>
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.32" Easing="CubicEaseOut" />
+                </Transitions>
+            </StackPanel.Transitions>
 
-            <!-- Кольцо обратного отсчёта -->
+            <!-- Countdown ring -->
             <Grid Width="240" Height="240" HorizontalAlignment="Center">
                 <controls:ProgressRingArc x:Name="Ring"
                                           Thickness="10"
@@ -95,7 +96,6 @@
                         HorizontalAlignment="Center"
                         Margin="0,36,0,0">
                 <Button x:Name="PostponeButton"
-                        Style="{StaticResource SecondaryButton}"
                         Content="{DynamicResource Break_Postpone}"
                         MinWidth="132"
                         Margin="0,0,12,0"
@@ -104,7 +104,7 @@
                         Foreground="#FFFFFFFF"
                         Click="OnPostpone" />
                 <Button x:Name="SkipButton"
-                        Style="{StaticResource AccentButton}"
+                        Classes="accent"
                         Content="{DynamicResource Break_Skip}"
                         MinWidth="132"
                         Click="OnSkip" />
