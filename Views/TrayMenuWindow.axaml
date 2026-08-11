@@ -79,7 +79,7 @@
                 </Button>
 
                 <!-- Quick pause presets: four buttons splitting the menu's width evenly -->
-                <UniformGrid x:Name="PausePresets" Rows="1" Columns="4" Margin="-3,2,-3,4">
+                <UniformGrid x:Name="PausePresets" Rows="1" Columns="4" Margin="-2,2,-2,4">
                     <Button Classes="preset" Content="{DynamicResource Tray_Preset_30Min}" Tag="30" Click="OnPausePreset" />
                     <Button Classes="preset" Content="{DynamicResource Tray_Preset_1Hour}" Tag="60" Click="OnPausePreset" />
                     <Button Classes="preset" Content="{DynamicResource Tray_Preset_2Hours}" Tag="120" Click="OnPausePreset" />

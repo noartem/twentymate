@@ -7,6 +7,8 @@
         MinWidth="560" MinHeight="520"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBackgroundBrush}"
+        WindowDecorations="BorderOnly"
+        CanMaximize="False"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="36">
 
@@ -18,16 +20,38 @@
         </Grid.RowDefinitions>
 
         <!-- Custom title bar: same background as the body, so there's no visible seam.
-             PointerPressed re-enables the drag/system-menu behavior a native title bar gives
-             for free; the caption buttons themselves are still drawn by Windows on top. -->
-        <Border Grid.Row="0" Background="{DynamicResource WindowBackgroundBrush}" PointerPressed="OnTitleBarPressed">
-            <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
-                <TextBlock Text="&#xE7B3;"
-                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                           FontSize="14"
-                           Foreground="{DynamicResource AccentBrush}" />
-                <TextBlock Text="TwentyMate" Classes="caption-text" Margin="8,0,0,0" />
-            </StackPanel>
+             WindowDecorations="BorderOnly" keeps the native frame (resize, shadow, snap) but drops
+             the title bar the theme would otherwise draw on top of this one, so the caption buttons
+             are ours too. The ElementRole attached properties hand drag, the system menu, and the
+             button hit-testing back to the OS. Maximize/full screen are deliberately absent. -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource WindowBackgroundBrush}"
+                WindowDecorationProperties.ElementRole="TitleBar">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE7B3;"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               FontSize="14"
+                               Foreground="{DynamicResource AccentBrush}" />
+                    <TextBlock Text="TwentyMate" Classes="caption-text" Margin="8,0,0,0" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button Classes="caption"
+                            Content="&#xE921;"
+                            WindowDecorationProperties.ElementRole="MinimizeButton"
+                            Click="OnMinimize" />
+                    <Button Classes="caption close"
+                            Content="&#xE8BB;"
+                            WindowDecorationProperties.ElementRole="CloseButton"
+                            Click="OnCloseWindow" />
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!-- ═══════════ Status header ═══════════ -->
@@ -70,8 +94,10 @@
         </Border>
 
         <!-- ═══════════ Settings ═══════════ -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="20,0,14,20">
-            <StackPanel Margin="0,8,6,0">
+        <!-- The gutter lives on the scrolled content, not on the ScrollViewer: as padding it would
+             sit outside the viewport, leaving a dead strip at the bottom the content never reaches. -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="20,8,20,20">
 
                 <!-- ───────── Schedule ───────── -->
                 <TextBlock Text="{DynamicResource Settings_Section_Schedule}" Classes="section-text" />

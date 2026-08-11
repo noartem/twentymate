@@ -50,6 +50,8 @@ public partial class TrayMenuWindow : Window
 
         InitializeComponent();
 
+        WindowEffects.ApplyTextRendering(this);
+
         _scheduler.Ticked += OnTick;
         Deactivated += (_, _) => CloseMenu();
 

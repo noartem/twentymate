@@ -36,6 +36,13 @@ public static class LocalizationManager
         [AppLanguage.PortugueseBr] = "pt-BR",
     };
 
+    /// <summary>
+    /// The OS display language, captured before <see cref="Apply"/> ever overrides
+    /// <see cref="CultureInfo.CurrentUICulture"/> — otherwise switching to a specific language and
+    /// back to <see cref="AppLanguage.System"/> would resolve to the language just left behind.
+    /// </summary>
+    private static readonly string SystemUICultureName = CultureInfo.CurrentUICulture.Name;
+
     private static Dictionary<string, string> _strings = new();
 
     public static CultureInfo Culture { get; private set; } = CultureInfo.GetCultureInfo(FallbackCode);
@@ -77,7 +84,7 @@ public static class LocalizationManager
     /// </summary>
     private static string ResolveSystemCode()
     {
-        var candidates = new List<string> { CultureInfo.CurrentUICulture.Name };
+        var candidates = new List<string> { SystemUICultureName };
         candidates.AddRange(GetWindowsPreferredUILanguages());
 
         foreach (var candidate in candidates)

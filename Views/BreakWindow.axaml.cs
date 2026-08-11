@@ -41,6 +41,8 @@ public partial class BreakWindow : Window
 
         InitializeComponent();
 
+        WindowEffects.ApplyTextRendering(this);
+
         _scheduler.Ticked += OnTick;
 
         PostponeButton.Content = LocalizationManager.T("Break_PostponeFormatted", settings.PostponeMinutes);

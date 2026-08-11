@@ -57,6 +57,19 @@ public static class WindowEffects
         else window.Opened += (_, _) => Applier();
     }
 
+    /// <summary>
+    /// Skia defaults to grayscale antialiasing and lets baselines land on fractional pixels, which
+    /// together read as noticeably softer than the ClearType-rendered text of native Windows apps.
+    /// The attached value inherits down the visual tree, so one call per window covers its content.
+    /// It has no XAML equivalent — <c>TextOptions</c> exposes no public attached-property field.
+    /// </summary>
+    public static void ApplyTextRendering(Window window) =>
+        TextOptions.SetTextOptions(window, new TextOptions
+        {
+            TextRenderingMode = TextRenderingMode.SubpixelAntialias,
+            BaselinePixelAlignment = BaselinePixelAlignment.Aligned,
+        });
+
     public static void SetDarkMode(IntPtr handle, bool dark)
     {
         var value = dark ? 1 : 0;

@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using FluentAvalonia.UI.Controls;
 using TwentyMate.Core;
@@ -40,6 +39,7 @@ public partial class SettingsWindow : Window
         ThemeManager.Changed += OnThemeChanged;
         LocalizationManager.Changed += OnLanguageChanged;
 
+        WindowEffects.ApplyTextRendering(this);
         WindowEffects.Apply(this, BackdropType.Mica, ThemeManager.IsDark);
         UpdateStatus();
     }
@@ -173,6 +173,24 @@ public partial class SettingsWindow : Window
         VersionText.Text = LocalizationManager.T("Settings_Footer_Version", versionText);
     }
 
+    /// <summary>
+    /// A ComboBox snapshots the selected item's content into its selection box when the selection
+    /// changes, so the DynamicResource behind a ComboBoxItem's caption redraws inside the dropdown
+    /// but not in the closed box. Re-selecting rebuilds it; <see cref="_loading"/> keeps the
+    /// round-trip through -1 from being written back to the settings.
+    /// </summary>
+    private void RefreshSelectionBox(ComboBox combo)
+    {
+        var wasLoading = _loading;
+        _loading = true;
+
+        var index = combo.SelectedIndex;
+        combo.SelectedIndex = -1;
+        combo.SelectedIndex = index;
+
+        _loading = wasLoading;
+    }
+
     private void UpdateWorkHoursAvailability()
     {
         var enabled = WorkHoursToggle.IsChecked is true;
@@ -298,11 +316,10 @@ public partial class SettingsWindow : Window
 
     // ═══════════════ Window styling ═══════════════
 
-    /// <summary>The custom title bar replaces the system-drawn one, so it has to opt back into drag-to-move itself.</summary>
-    private void OnTitleBarPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) BeginMoveDrag(e);
-    }
+    /// <summary>The custom title bar draws its own caption buttons, so it wires up their actions too.</summary>
+    private void OnMinimize(object? sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void OnCloseWindow(object? sender, RoutedEventArgs e) => Close();
 
     private void OnThemeChanged(object? sender, EventArgs e)
     {
@@ -312,6 +329,8 @@ public partial class SettingsWindow : Window
 
     private void OnLanguageChanged(object? sender, EventArgs e)
     {
+        RefreshSelectionBox(StyleCombo);
+        RefreshSelectionBox(ThemeCombo);
         UpdateDayChipLabels();
         UpdateUnitLabels();
         UpdateFooterVersion();
