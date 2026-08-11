@@ -15,7 +15,6 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="36" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -54,53 +53,54 @@
             </Grid>
         </Border>
 
-        <!-- ═══════════ Status header ═══════════ -->
-        <Border Grid.Row="1" Margin="20,16,20,8" Classes="card" Padding="18,16">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <Grid Width="64" Height="64" VerticalAlignment="Center">
-                    <controls:ProgressRingArc x:Name="StatusRing"
-                                              Thickness="5"
-                                              TrackBrush="{DynamicResource TrackBrush}"
-                                              ArcBrush="{DynamicResource AccentBrush}" />
-                    <TextBlock Text="&#xE7B3;"
-                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                               FontSize="22"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Foreground="{DynamicResource AccentBrush}" />
-                </Grid>
-
-                <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="StatusTitle" Text="{DynamicResource Settings_Status_NextBreak}"
-                               Classes="title-text"
-                               FontSize="19"
-                               TextTrimming="CharacterEllipsis" />
-                    <TextBlock x:Name="StatusSubtitle" Text="{DynamicResource Settings_Status_NextBreakSubtitle}"
-                               Classes="caption-text" Margin="0,4,0,0" />
-                </StackPanel>
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="PauseButton"
-                            Content="{DynamicResource Action_Pause}" MinWidth="96" Margin="0,0,8,0" Click="OnTogglePause" />
-                    <Button Classes="accent"
-                            Content="{DynamicResource Settings_HeaderCard_BreakNowButton}" MinWidth="96" Click="OnBreakNow" />
-                </StackPanel>
-            </Grid>
-        </Border>
-
         <!-- ═══════════ Settings ═══════════ -->
-        <!-- The gutter lives on the scrolled content, not on the ScrollViewer: as padding it would
-             sit outside the viewport, leaving a dead strip at the bottom the content never reaches. -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="20,8,20,20">
+        <!-- Everything below the title bar scrolls together, and the gutter lives on the scrolled
+             content rather than on the ScrollViewer: as padding it would sit outside the viewport,
+             leaving a dead strip at the bottom the content never reaches. -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="20,16,20,20">
+
+                <!-- ───────── Status header ───────── -->
+                <Border Classes="card" Padding="18,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Width="64" Height="64" VerticalAlignment="Center">
+                            <controls:ProgressRingArc x:Name="StatusRing"
+                                                      Thickness="5"
+                                                      TrackBrush="{DynamicResource TrackBrush}"
+                                                      ArcBrush="{DynamicResource AccentBrush}" />
+                            <TextBlock Text="&#xE7B3;"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                       FontSize="22"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentBrush}" />
+                        </Grid>
+
+                        <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
+                            <TextBlock x:Name="StatusTitle" Text="{DynamicResource Settings_Status_NextBreak}"
+                                       Classes="title-text"
+                                       FontSize="19"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="StatusSubtitle" Text="{DynamicResource Settings_Status_NextBreakSubtitle}"
+                                       Classes="caption-text" Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="PauseButton"
+                                    Content="{DynamicResource Action_Pause}" MinWidth="96" Margin="0,0,8,0" Click="OnTogglePause" />
+                            <Button Classes="accent"
+                                    Content="{DynamicResource Settings_HeaderCard_BreakNowButton}" MinWidth="96" Click="OnBreakNow" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
                 <!-- ───────── Schedule ───────── -->
-                <TextBlock Text="{DynamicResource Settings_Section_Schedule}" Classes="section-text" />
+                <TextBlock Text="{DynamicResource Settings_Section_Schedule}" Classes="section-text" Margin="2,20,0,8" />
                 <Border Classes="card">
                     <StackPanel>
                         <Grid Classes="settings-row">
