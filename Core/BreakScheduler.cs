@@ -32,6 +32,12 @@ public sealed class BreakScheduler
     private DateTime? _pausedUntil;
     private bool _pausedByIdle;
 
+    // Wall-clock time of the previous Update() tick, used to detect sleep/hibernate:
+    // DispatcherTimer doesn't fire while the OS is suspended, so a large forward jump
+    // between ticks means the machine just woke up.
+    private DateTime _lastTick;
+    private static readonly TimeSpan SleepResumeThreshold = TimeSpan.FromSeconds(5);
+
     public BreakScheduler(AppSettings settings)
     {
         _settings = settings;
@@ -68,6 +74,7 @@ public sealed class BreakScheduler
     public void Start()
     {
         BeginWorkPhase();
+        _lastTick = DateTime.Now;
         _timer.Start();
     }
 
@@ -156,9 +163,41 @@ public sealed class BreakScheduler
         SetState(SchedulerState.Working);
     }
 
+    /// <summary>
+    /// Called when a large wall-clock gap between ticks signals a wake from sleep/hibernate.
+    /// Start a fresh work interval; an interrupted break is closed without being counted.
+    /// Paused/OffHours are left to the normal wall-clock logic.
+    /// </summary>
+    private void HandleResumeFromSleep()
+    {
+        switch (State)
+        {
+            case SchedulerState.Working:
+                BeginWorkPhase();
+                break;
+            case SchedulerState.Break:
+                BeginWorkPhase();
+                BreakFinished?.Invoke(this, false); // close the overlay, don't count as completed
+                break;
+        }
+    }
+
     private void Update()
     {
         var now = DateTime.Now;
+        var gap = now - _lastTick;
+        _lastTick = now;
+
+        // DispatcherTimer doesn't fire while the OS is suspended — a large forward jump
+        // in wall-clock time between ticks means the machine just woke up. Reset the
+        // period so a break doesn't fire instantly from the now-elapsed countdown.
+        if (gap > SleepResumeThreshold)
+        {
+            HandleResumeFromSleep();
+            if (Remaining < TimeSpan.Zero) Remaining = TimeSpan.Zero;
+            Ticked?.Invoke(this, EventArgs.Empty);
+            return;
+        }
 
         switch (State)
         {
